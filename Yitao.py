@@ -21,9 +21,10 @@ def totalInteractionForce(rs):
         totalForce += singleInteractionForce(rs[i])
     return totalForce
 
+
 # Finds nearest copy for minimum interaction convention
 def MICneighbour(rVec):
-    return np.mod(rVec + 0.5*L*np.ones(nDim), np.ones(nDim)) - 0.5*L*np.ones(nDim)
+    return np.mod(rVec + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions  # boxDimenions is the x,y,z vector of the size of the box. E.g. if its a square box of sizeN then boxDimensions = L*np.ones(nDim)
     # returns the conversion to nearest periodic clone
 
 
