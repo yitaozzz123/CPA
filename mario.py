@@ -7,11 +7,25 @@ import matplotlib.animation as animation
 
 box_size=10
 n_dim=2
-N=10
+num_particles=10
+mass=0.1
+timestep=0.01
 
-pos = np.random.uniform(0,box_size,size=(N,n_dim))
-orient = np.random.uniform(-np.pi, np.pi,size=N)
 
-fig, ax= plt.subplots(figsize=(6,6))
+rss = np.zeros((num_particles, n_dim))
+pos=np.random.uniform(0, box_size, size=(num_particles, n_dim) )
+vel=np.random.uniform(-1, 1, size=(num_particles, n_dim) )
 
-qv = ax.quiver(pos[:,0], pos[:,1], np.cos(orient[0]), np.sin(orient), orient, clim=[-np.pi, np.pi])
+def update(pos, vel, time, timestep=timestep):
+    #computation of the force
+    F=np.zeros((num_particles, n_dim))
+
+    acceleration=F/mass
+    pos+=vel*timestep
+    vel+=acceleration*timestep
+
+    pos[pos>box_size] -= box_size
+    pos[pos<0] += box_size
+
+
+
