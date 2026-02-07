@@ -14,15 +14,23 @@ mass=0.1
 timestep=0.01
 tail_lenght=6
 num_iterations=100
+save=True
 
 #initialization of position, velocity 
-rss = np.zeros((num_particles, n_dim))
 pos=np.random.uniform(0, box_size, size=(num_particles, n_dim) )
-vel=np.random.uniform(-10, 10, size=(num_particles, n_dim) )
+vel=np.random.uniform(-20, 20, size=(num_particles, n_dim) )
 
 #tail initialization
 tail=deque(maxlen=tail_lenght)
 tail.append(pos.copy())
+
+#setup for 3d
+if n_dim==3:
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111, projection="3d")
+
 
 for i in range(num_iterations):
 
@@ -44,18 +52,20 @@ for i in range(num_iterations):
     #from deque to numpy to have a functioning plot
     tail_numpy = np.stack(tail, axis=0)
 
-    plt.clf()
-
     #we do not want to plot the tail of a particle if the periodic boundary condition happened 
     d = np.diff(tail_numpy, axis=0)                          
     wrapped = np.any(np.abs(d) > box_size/2, axis=2) 
     yes_tail_index = ~np.any(wrapped, axis=0)                
 
+    #selection of the suitable tails
+    plottable_tail=tail_numpy[:,yes_tail_index,:]
 
+    #animation in 2d or 3d
     if len(tail)==tail_lenght and n_dim==2:
+
+        plt.clf()
+
         plt.scatter(pos[:,0],pos[:,1],marker='o')
-            
-        plottable_tail=tail_numpy[:,yes_tail_index,:]
         
         for plottable_particle in range(np.shape(plottable_tail)[1]):
             plt.plot(plottable_tail[:,plottable_particle,0],plottable_tail[:,plottable_particle,1])
@@ -64,7 +74,32 @@ for i in range(num_iterations):
         plt.ylim(0, box_size)
         plt.pause(0.01)
 
+        if save==True:
+            np.save("tail.npy", plottable_tail)
+            np.save("pos.npy", pos)
+            np.save("vel.npy",vel)
+            plt.savefig("figure.png", dpi=150, bbox_inches="tight")
 
+    if len(tail) == tail_lenght and n_dim == 3:
+        ax.cla()
 
+        ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], marker='o')
 
+        for plottable_particle in range(plottable_tail.shape[1]):
+            ax.plot(plottable_tail[:, plottable_particle, 0],
+                    plottable_tail[:, plottable_particle, 1],
+                    plottable_tail[:, plottable_particle, 2])
+
+        ax.set_xlim(0, box_size)
+        ax.set_ylim(0, box_size)
+        ax.set_zlim(0, box_size)
+
+        plt.draw()
+        plt.pause(0.01)
+
+        if save == True:
+            np.save("tail.npy", plottable_tail)
+            np.save("pos.npy", pos)
+            np.save("vel.npy", vel)
+            fig.savefig("figure.png", dpi=150, bbox_inches="tight")
 
