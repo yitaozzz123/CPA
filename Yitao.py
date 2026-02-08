@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 sigma = 3.5e-10
-epsilon = 120*1.38e-23*400
+epsilon = 120*1.38e-23*200
 mass = 40/(6.022e-23)
 
 
