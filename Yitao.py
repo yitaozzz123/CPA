@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 # physical parameters corresponding to Argon
 sigma = 3.5e-10
 epsilon = 120*1.38e-23
-mass = 40e-3/(6.022e-23)
+mass = 40e-3/(6.022e+23)
 
 
 
@@ -79,12 +79,12 @@ def calculateForces(rs, boxDimensions, nDims):
 # Messing around with some simulation. You can ignore
 
 nTimesteps = 1000
-nParticles = 6
+nParticles = 5
 nDims = 2
-dt = 0.1
-L = sigma
+dt = 1e-14
+L = sigma*1e1
 boxDimensions = L*np.ones(nDims)
-v0 = L*0.001
+v0 = 0
 rss = np.zeros((nTimesteps, nParticles, nDims))
 vss = np.zeros((nTimesteps, nParticles, nDims))
 
@@ -102,7 +102,9 @@ for i in range(nTimesteps-1):
 
 
 for j in range(nParticles):
-    plt.scatter(rss[:,j,0], rss[:,j,1], alpha = np.linspace(0,1,nTimesteps))
+    plt.scatter(rss[:,j,0], rss[:,j,1], alpha = np.linspace(0,0.1,nTimesteps))
+    plt.scatter(rss[0,j,0], rss[0,j,1], s = 200, facecolors = "none", edgecolors = "lightgrey")
+    plt.scatter(rss[-1,j,0], rss[-1,j,1], s = 200, facecolors = "none", edgecolors = "black")
 plt.show()
 
 
