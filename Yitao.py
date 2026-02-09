@@ -32,7 +32,7 @@ rs is an array of vectors from target -> interacting particles
 nDims is the number of dimensions.
 returns the net force experienced from all the interactions on that particle
 """
-def netForce(rs, nDims)
+def netForce(rs, nDims):
     # loop through each particle and and up its pairwise force contribution
     totalForce = np.zeros(nDims)
     for i in range(len(rs)):
@@ -61,7 +61,7 @@ Returns an array of forces
 """
 def calculateForces(rs, boxDimensions, nDims): 
     # loop through each particle i
-    fs = np.zeros(len(rs),nDims)
+    fs = np.zeros((len(rs),nDims))
     for i in range(len(rs)):
         # 1. take the difference in position between particle i and each other particle
         # 2. remove the zero vector corresponding to self interaction
@@ -89,18 +89,12 @@ rss = np.zeros((nTimesteps, nParticles, nDims))
 vss = np.zeros((nTimesteps, nParticles, nDims))
 
 r0s = L*(np.random.rand(nParticles, nDims))
-v0s = 2*v0*(np.random.rand(nParticles, nDims)-0.5)
+v0s = 0*v0*(np.random.rand(nParticles, nDims)-0.5)
 rss[0,:,:] = r0s
 vss[0,:,:] = v0s
 
 for i in range(nTimesteps-1):
-    Fs = np.zeros((nParticles,nDims))
-    for j in range(nParticles):
-        deltaRList = np.ndarray.tolist(rss[i,:,:]-rss[i,j,:])
-        del deltaRList[j]
-        deltaRs = np.array(deltaRList)
-        deltaRs = MICneighbour(deltaRs)
-        Fs[j,:] = totalInteractionForce(deltaRs)
+    Fs = calculateForces(rss[i,:,:], boxDimensions=boxDimensions, nDims=nDims)
     rss[i+1,:,:] = rss[i,:,:] + dt * vss[i,:,:]
     vss[i+1,:,:] = vss[i,:,:] + dt * Fs/mass
     rss[i+1,:,:] = np.mod(rss[i+1,:,:],boxDimensions)
