@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
 
+
 """
 In this code, the numerical simulation of the molecule dinamic is animated and saved
 
@@ -22,18 +23,64 @@ This first part contains the numerical setup of the simulation:
 - save (boolean) is a switch used to save the data of position, velocities, tails 
     and the final plot
 """
-box_size=10
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+sigma = 3.5e-10
+epsilon = 120*1.38e-23
+
+
+
+# returns force from LJ potential with rVec: target -> interacting particle
+def singleInteractionForce(rVec):           # rVec is the seperation from target particle to surrounding particles
+    r = np.sqrt(np.dot(rVec, rVec))         # norm of rVec
+    F = epsilon*(48*(sigma**12)*(r**-14) - 24*(sigma**6)*(r**-8))*rVec
+    return F
+    # single interaction force. For total, sum up all interactions
+
+# takes a list of vectors from target to interacting particles, returns total force
+def totalInteractionForce(rs, nDims):
+    totalForce = np.zeros(nDims)
+    for i in range(len(rs)):
+        totalForce += singleInteractionForce(rs[i])
+    return totalForce
+
+# Finds nearest copy for minimum interaction convention
+def MICneighbour(rVec, boxDimensions):      # boxDimensions is the size of the box in x,y,z. E.g. a square box has boxDimensions = [L,L,L]
+    return np.mod(rVec + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
+    # returns the conversion to nearest periodic clone
+
+# Calculates all forces on all particles based on Lennard-Jones potential
+# Takes the positions of all particles
+def calculateForces(rs, boxDimensions, nDims): 
+    # loop through each particle
+    fs = np.zeros((len(rs),nDims))
+    for i in range(len(rs)):
+        # take the difference in position with each other particle, remove the zero vector corresponding to the difference to itself, then converts to MIC nearest clone
+        deltaRs = MICneighbour(np.delete(rs[i]-rs, i, 0), boxDimensions)
+        # calculate force via LJ
+        fs[i] = totalInteractionForce(deltaRs, nDims=nDims)
+    return fs
+    # returns an array of total forces for each particle
+
+
+
+
+box_size=1e-9
 n_dim=2
-num_particles=100
-mass=0.1
-timestep=0.01
+num_particles=10 #200
+mass = 40/(6.022e-20)
+timestep=1e-3
 tail_lenght=6
-num_iterations=100
+num_iterations=500
 save=False
 
 #initialization of position, velocity 
 pos=np.random.uniform(0, box_size, size=(num_particles, n_dim) )
-vel=np.random.uniform(-20, 20, size=(num_particles, n_dim) )
+vel=np.random.uniform(-0*box_size, 0*box_size, size=(num_particles, n_dim) )
+
+box=box_size * np.ones(n_dim)
 
 #tail initialization
 tail=deque(maxlen=tail_lenght)
@@ -50,7 +97,7 @@ if n_dim==3:
 for i in range(num_iterations):
 
     #computation of the force and acceleration
-    F=np.zeros((num_particles, n_dim))    
+    F=calculateForces(rs=pos,boxDimensions=box,nDims=n_dim)  
     acceleration=F/mass
 
     #update of positions and velocity for every interaction
@@ -110,7 +157,7 @@ for i in range(num_iterations):
         ax.set_zlim(0, box_size)
 
         plt.draw()
-        plt.pause(0.01)
+        plt.pause(0.3)
 
         if save == True:
             np.save("tail.npy", plottable_tail)
