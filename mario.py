@@ -6,7 +6,22 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
 
-#Numerical setup
+"""
+In this code, the numerical simulation of the molecule dinamic is animated and saved
+
+"""
+
+"""
+This first part contains the numerical setup of the simulation: 
+- box_size, num_particles, num_dim
+    mass, are the physical settings of the experiment.
+- timestep is used to compute the update of the position and the velocity
+- tail_lenght determine how long is the tail, that is the component the makes the
+    direction of the particles visible
+-num_iteractions determine how long will be the simulation
+- save (boolean) is a switch used to save the data of position, velocities, tails 
+    and the final plot
+"""
 box_size=10
 n_dim=2
 num_particles=100
@@ -14,7 +29,7 @@ mass=0.1
 timestep=0.01
 tail_lenght=6
 num_iterations=100
-save=True
+save=False
 
 #initialization of position, velocity 
 pos=np.random.uniform(0, box_size, size=(num_particles, n_dim) )
@@ -60,7 +75,7 @@ for i in range(num_iterations):
     #selection of the suitable tails
     plottable_tail=tail_numpy[:,yes_tail_index,:]
 
-    #animation in 2d or 3d
+    #animation in 2d or 3d and save of the last plot
     if len(tail)==tail_lenght and n_dim==2:
 
         plt.clf()
