@@ -20,14 +20,23 @@ def totalInteractionForce(rs):
         totalForce += singleInteractionForce(rs[i])
     return totalForce
 
-
 # Finds nearest copy for minimum interaction convention
-def MICneighbour(rVec):
-    return np.mod(rVec + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions  # boxDimenions is the x,y,z vector of the size of the box. E.g. if its a square box of sizeN then boxDimensions = L*np.ones(nDims)
+def MICneighbour(rVec, boxDimensions):      # boxDimensions is the size of the box in x,y,z. E.g. a square box has boxDimensions = [L,L,L]
+    return np.mod(rVec + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
     # returns the conversion to nearest periodic clone
 
-
-
+# Calculates all forces on all particles based on Lennard-Jones potential
+# Takes the positions of all particles
+def calculateForces(rs, boxDimensions): 
+    # loop through each particle
+    fs = np.zeros(len(rs),nDims)
+    for i in range(len(rs)):
+        # take the difference in position with each other particle, remove the zero vector corresponding to the difference to itself, then converts to MIC nearest clone
+        deltaRs = MICneighbour(np.delete(rs[i]-rs, i, 0), boxDimensions)
+        # calculate force via LJ
+        fs[i] = totalInteractionForce(deltaRs)
+    return fs
+    # returns an array of total forces for each particle
 
 
 
