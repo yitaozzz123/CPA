@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 sigma = 3.5e-10
-epsilon = 120*1.38e-23*200
+epsilon = 120*1.38e-23
 mass = 40/(6.022e-23)
 
 
@@ -14,7 +14,7 @@ def singleInteractionForce(rVec):           # rVec is the seperation from target
     # single interaction force. For total, sum up all interactions
 
 # takes a list of vectors from target to interacting particles, returns total force
-def totalInteractionForce(rs):
+def totalInteractionForce(rs, nDims):
     totalForce = np.zeros(nDims)
     for i in range(len(rs)):
         totalForce += singleInteractionForce(rs[i])
@@ -25,6 +25,8 @@ def MICneighbour(rVec, boxDimensions):      # boxDimensions is the size of the b
     return np.mod(rVec + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
     # returns the conversion to nearest periodic clone
 
+
+
 # Calculates all forces on all particles based on Lennard-Jones potential
 # Takes the positions of all particles
 def calculateForces(rs, boxDimensions): 
@@ -34,7 +36,7 @@ def calculateForces(rs, boxDimensions):
         # take the difference in position with each other particle, remove the zero vector corresponding to the difference to itself, then converts to MIC nearest clone
         deltaRs = MICneighbour(np.delete(rs[i]-rs, i, 0), boxDimensions)
         # calculate force via LJ
-        fs[i] = totalInteractionForce(deltaRs)
+        fs[i] = totalInteractionForce(deltaRs, nDims)
     return fs
     # returns an array of total forces for each particle
 
