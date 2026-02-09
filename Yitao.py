@@ -1,44 +1,75 @@
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+
+# physical parameters corresponding to Argon
 sigma = 3.5e-10
 epsilon = 120*1.38e-23
-mass = 40/(6.022e-23)
+mass = 40e-3/(6.022e-23)
 
 
-# returns force from LJ potential with rVec: target -> interacting particle
-def singleInteractionForce(rVec):           # rVec is the seperation from target particle to surrounding particles
-    r = np.sqrt(np.dot(rVec, rVec))         # norm of rVec
-    F = epsilon*(48*(sigma**12)*(r**-14) - 24*(sigma**6)*(r**-8))*rVec
+
+"""
+Calculates interaction force between two particles.
+r is the vector from target -> interacting particle.
+returns the force experienced from the interacting particle
+"""
+def pairwiseForce(r):
+    # calculate the norm of rVec = r        
+    rNorm = np.sqrt(np.dot(r, r))
+    # calculate the force via F = -nabla U using the Lennard-Jones potential
+    F = epsilon*(48*(sigma**12)*(rNorm**-14) - 24*(sigma**6)*(rNorm**-8))*r
     return F
-    # single interaction force. For total, sum up all interactions
 
-# takes a list of vectors from target to interacting particles, returns total force
-def totalInteractionForce(rs, nDims):
+
+
+"""
+Calculates net force of one particle experienced from all other particles
+rs is an array of vectors from target -> interacting particles
+nDims is the number of dimensions.
+returns the net force experienced from all the interactions on that particle
+"""
+def netForce(rs, nDims)
+    # loop through each particle and and up its pairwise force contribution
     totalForce = np.zeros(nDims)
     for i in range(len(rs)):
-        totalForce += singleInteractionForce(rs[i])
+        totalForce += pairwiseForce(rs[i])
     return totalForce
 
-# Finds nearest copy for minimum interaction convention
-def MICneighbour(rVec, boxDimensions):      # boxDimensions is the size of the box in x,y,z. E.g. a square box has boxDimensions = [L,L,L]
-    return np.mod(rVec + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
-    # returns the conversion to nearest periodic clone
+"""
+Converts a seperation vector between particles inside a box, to the seperation in the Minimum Image Convention (MIC) clone
+r is the seperation vector between to particles
+boxDimensions is the x,y,z size array of the box. E.g. a cubic box has (L,L,L)
+"""
+def rMIC(r, boxDimensions):
+    # shift the vector r, then take the modulus, which returns the right periodic image.
+    # Then re-shift r back to origin.
+    return np.mod(r + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
 
 
 
-# Calculates all forces on all particles based on Lennard-Jones potential
-# Takes the positions of all particles
-def calculateForces(rs, boxDimensions): 
-    # loop through each particle
+
+"""
+THIS IS THE FUNCTION YOU USE
+Calculates all forces of all particles
+rs is an array of all positions within the box
+boxDimensions is the x,y,z size array of the box. E.g. a cubic box has (L,L,L)
+Returns an array of forces
+"""
+def calculateForces(rs, boxDimensions, nDims): 
+    # loop through each particle i
     fs = np.zeros(len(rs),nDims)
     for i in range(len(rs)):
-        # take the difference in position with each other particle, remove the zero vector corresponding to the difference to itself, then converts to MIC nearest clone
-        deltaRs = MICneighbour(np.delete(rs[i]-rs, i, 0), boxDimensions)
-        # calculate force via LJ
-        fs[i] = totalInteractionForce(deltaRs, nDims)
+        # 1. take the difference in position between particle i and each other particle
+        # 2. remove the zero vector corresponding to self interaction
+        # 3. convert seperations into MIC nearest clone seperations.
+        deltaRs = rMIC(np.delete(rs[i]-rs, i, 0), boxDimensions)
+        # calculate net force on particle i via Lennard Jones potential
+        fs[i] = netForce(deltaRs, nDims)
     return fs
-    # returns an array of total forces for each particle
 
 
 
