@@ -28,17 +28,18 @@ This first part contains the numerical setup of the simulation:
 
 box_size=1e-9
 n_dim=2
-num_particles=20 #200
+num_particles=10 #200
 mass = 40/(6.022e+23)
 timestep=1e-18
 tail_lenght=50
 num_iterations=500
-save=False
+save=True
 fps=60
+periodic_tail=False
 
 #initialization of position, velocity 
 pos=np.random.uniform(0, box_size, size=(num_particles, n_dim))
-vel=np.random.uniform(-box_size/(1000*timestep), box_size/(timestep*1000), size=(num_particles, n_dim))
+vel=np.random.uniform(-box_size/(500*timestep), box_size/(timestep*500), size=(num_particles, n_dim))
 
 box=box_size * np.ones(n_dim)
 
@@ -84,12 +85,16 @@ for i in range(num_iterations):
     tail_numpy = np.stack(tail, axis=0)
 
     #we do not want to plot the tail of a particle if the periodic boundary condition happened 
-    d = np.diff(tail_numpy, axis=0)                          
-    wrapped = np.any(np.abs(d) > box_size/2, axis=2) 
-    yes_tail_index = ~np.any(wrapped, axis=0)                
-
+    if periodic_tail==False:
+        d = np.diff(tail_numpy, axis=0)                          
+        wrapped = np.any(np.abs(d) > box_size/2, axis=2) 
+        yes_tail_index = ~np.any(wrapped, axis=0) 
+        plottable_tail=tail_numpy[:,yes_tail_index,:]
+    else:
+        plottable_tail=tail_numpy
+        
     #selection of the suitable tails
-    plottable_tail=tail_numpy[:,yes_tail_index,:]
+    
     """
         mod_vel=np.zeros((vel.shape[0]))
         mod_vel=np.dot(vel,vel)
@@ -97,7 +102,7 @@ for i in range(num_iterations):
         print(max_vel*timestep/sigma)"""
 
     #animation in 2d or 3d and save of the last plot
-    if len(tail)==tail_lenght and n_dim==2:
+    if n_dim==2:
 
         plt.clf()
 
@@ -116,7 +121,7 @@ for i in range(num_iterations):
             np.save("vel.npy",vel)
             plt.savefig("figure.png", dpi=150, bbox_inches="tight")
 
-    if len(tail) == tail_lenght and n_dim == 3:
+    if n_dim == 3:
         ax.cla()
 
         ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], marker='o')
@@ -130,6 +135,7 @@ for i in range(num_iterations):
         ax.set_ylim(0, box_size)
         ax.set_zlim(0, box_size)
 
+            
         plt.draw()
         plt.pause(1/fps)
 
@@ -138,4 +144,5 @@ for i in range(num_iterations):
             np.save("pos.npy", pos)
             np.save("vel.npy", vel)
             fig.savefig("figure.png", dpi=150, bbox_inches="tight")
+
 
