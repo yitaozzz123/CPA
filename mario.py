@@ -5,6 +5,7 @@ from scipy.spatial import cKDTree
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
+from Yitao import calculateForces
 
 
 """
@@ -24,61 +25,20 @@ This first part contains the numerical setup of the simulation:
     and the final plot
 """
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-sigma = 3.5e-10
-epsilon = 120*1.38e-23
-
-
-
-# returns force from LJ potential with rVec: target -> interacting particle
-def singleInteractionForce(rVec):           # rVec is the seperation from target particle to surrounding particles
-    r = np.sqrt(np.dot(rVec, rVec))         # norm of rVec
-    F = epsilon*(48*(sigma**12)*(r**-14) - 24*(sigma**6)*(r**-8))*rVec
-    return F
-    # single interaction force. For total, sum up all interactions
-
-# takes a list of vectors from target to interacting particles, returns total force
-def totalInteractionForce(rs, nDims):
-    totalForce = np.zeros(nDims)
-    for i in range(len(rs)):
-        totalForce += singleInteractionForce(rs[i])
-    return totalForce
-
-# Finds nearest copy for minimum interaction convention
-def MICneighbour(rVec, boxDimensions):      # boxDimensions is the size of the box in x,y,z. E.g. a square box has boxDimensions = [L,L,L]
-    return np.mod(rVec + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
-    # returns the conversion to nearest periodic clone
-
-# Calculates all forces on all particles based on Lennard-Jones potential
-# Takes the positions of all particles
-def calculateForces(rs, boxDimensions, nDims): 
-    # loop through each particle
-    fs = np.zeros((len(rs),nDims))
-    for i in range(len(rs)):
-        # take the difference in position with each other particle, remove the zero vector corresponding to the difference to itself, then converts to MIC nearest clone
-        deltaRs = MICneighbour(np.delete(rs[i]-rs, i, 0), boxDimensions)
-        # calculate force via LJ
-        fs[i] = totalInteractionForce(deltaRs, nDims=nDims)
-    return fs
-    # returns an array of total forces for each particle
-
-
-
 
 box_size=1e-9
 n_dim=2
-num_particles=10 #200
-mass = 40/(6.022e-20)
-timestep=1e-3
-tail_lenght=6
+num_particles=20 #200
+mass = 40/(6.022e+23)
+timestep=1e-18
+tail_lenght=50
 num_iterations=500
 save=False
+fps=60
 
 #initialization of position, velocity 
-pos=np.random.uniform(0, box_size, size=(num_particles, n_dim) )
-vel=np.random.uniform(-0*box_size, 0*box_size, size=(num_particles, n_dim) )
+pos=np.random.uniform(0, box_size, size=(num_particles, n_dim))
+vel=np.random.uniform(-box_size/(1000*timestep), box_size/(timestep*1000), size=(num_particles, n_dim))
 
 box=box_size * np.ones(n_dim)
 
@@ -97,7 +57,7 @@ if n_dim==3:
 for i in range(num_iterations):
 
     #computation of the force and acceleration
-    F=calculateForces(rs=pos,boxDimensions=box,nDims=n_dim)  
+    F=calculateForces(rs=pos, boxDimensions=box, nDims=n_dim)  
     acceleration=F/mass
 
     #update of positions and velocity for every interaction
@@ -105,8 +65,17 @@ for i in range(num_iterations):
     vel+=acceleration*timestep
 
     #application of the periodic boundary conditions
-    pos[pos>box_size] -= box_size
-    pos[pos<0] += box_size
+    
+    #first implementation of periodic boundary
+    #pos[pos>box_size] -= box_size
+    #pos[pos<0] += box_size
+
+    #second implementation
+    #pos_int=pos//box_size
+    #pos-=pos_int*box_size
+
+    #third implementation
+    pos%=box_size
 
     #tail update
     tail.append(pos.copy())
@@ -121,6 +90,11 @@ for i in range(num_iterations):
 
     #selection of the suitable tails
     plottable_tail=tail_numpy[:,yes_tail_index,:]
+    """
+        mod_vel=np.zeros((vel.shape[0]))
+        mod_vel=np.dot(vel,vel)
+        max_vel=np.max(mod_vel)
+        print(max_vel*timestep/sigma)"""
 
     #animation in 2d or 3d and save of the last plot
     if len(tail)==tail_lenght and n_dim==2:
@@ -134,7 +108,7 @@ for i in range(num_iterations):
     
         plt.xlim(0, box_size)
         plt.ylim(0, box_size)
-        plt.pause(0.01)
+        plt.pause(1/fps)
 
         if save==True:
             np.save("tail.npy", plottable_tail)
@@ -157,7 +131,7 @@ for i in range(num_iterations):
         ax.set_zlim(0, box_size)
 
         plt.draw()
-        plt.pause(0.3)
+        plt.pause(1/fps)
 
         if save == True:
             np.save("tail.npy", plottable_tail)

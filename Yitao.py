@@ -26,12 +26,11 @@ def MICneighbour(rVec, boxDimensions):      # boxDimensions is the size of the b
     # returns the conversion to nearest periodic clone
 
 
-
 # Calculates all forces on all particles based on Lennard-Jones potential
 # Takes the positions of all particles
-def calculateForces(rs, boxDimensions): 
+def calculateForces(rs, boxDimensions, nDims): 
     # loop through each particle
-    fs = np.zeros(len(rs),nDims)
+    fs = np.zeros((len(rs),nDims))
     for i in range(len(rs)):
         # take the difference in position with each other particle, remove the zero vector corresponding to the difference to itself, then converts to MIC nearest clone
         deltaRs = MICneighbour(np.delete(rs[i]-rs, i, 0), boxDimensions)
@@ -44,7 +43,7 @@ def calculateForces(rs, boxDimensions):
 
 
 
-
+"""
 # Messing around with some simulation. You can ignore
 
 nTimesteps = 1000
@@ -81,3 +80,4 @@ for j in range(nParticles):
 plt.show()
 
 
+"""
