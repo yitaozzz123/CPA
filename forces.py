@@ -10,6 +10,9 @@ sigma = 3.5e-10
 epsilon = 120*1.38e-23
 mass = 40e-3/(6.022e+23)
 
+"""
+All functions, quantities are given in natural, units, i.e. dimensionless quantities.
+"""
 
 
 """
@@ -33,7 +36,7 @@ rs is an array of vectors from target -> interacting particles
 nDims is the number of dimensions.
 returns the net force experienced from all the interactions on that particle
 """
-def netForce(rs, nDims, sigma = sigma, epsilon = epsilon, mass = mass):
+def netForce(rs, nDims):
     # loop through each particle and sum up its pairwise force contribution
     force = np.zeros(nDims)
     for i in range(len(rs)):
@@ -72,7 +75,6 @@ def calculateForces(rs, boxDimensions, nDims):
         # calculate net force on particle i via Lennard Jones potential
         fs[i] = netForce(deltaRs, nDims)
     return fs
-
 
 
 

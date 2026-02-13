@@ -5,7 +5,7 @@ from scipy.spatial import cKDTree
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
-from backend import calculateForces
+from forces import calculateForces
 
 
 """
