@@ -21,8 +21,8 @@ def pairwiseForce(r):
     # calculate the norm of rVec = r        
     rNorm = np.sqrt(np.dot(r, r))
     # calculate the force via F = -nabla U using the Lennard-Jones potential
-    F = epsilon*(48*(sigma**12)*(rNorm**-14) - 24*(sigma**6)*(rNorm**-8))*r
-    return F
+    force = epsilon*(48*(sigma**12)*(rNorm**-14) - 24*(sigma**6)*(rNorm**-8))*r
+    return force
 
 
 
@@ -33,11 +33,11 @@ nDims is the number of dimensions.
 returns the net force experienced from all the interactions on that particle
 """
 def netForce(rs, nDims):
-    # loop through each particle and and up its pairwise force contribution
-    totalForce = np.zeros(nDims)
+    # loop through each particle and sum up its pairwise force contribution
+    force = np.zeros(nDims)
     for i in range(len(rs)):
-        totalForce += pairwiseForce(rs[i])
-    return totalForce
+        force += pairwiseForce(rs[i])
+    return force
 
 """
 Converts a seperation vector between particles inside a box, to the seperation in the Minimum Image Convention (MIC) clone
@@ -61,6 +61,7 @@ Returns an array of forces
 """
 def calculateForces(rs, boxDimensions, nDims): 
     # loop through each particle i
+    # fs is the an array of net-force vectors for each particle 
     fs = np.zeros((len(rs),nDims))
     for i in range(len(rs)):
         # 1. take the difference in position between particle i and each other particle
@@ -81,15 +82,15 @@ def calculateForces(rs, boxDimensions, nDims):
 nTimesteps = 1000
 nParticles = 5
 nDims = 2
-dt = 1e-14
+dt = 1e-15
 L = sigma*1e1
 boxDimensions = L*np.ones(nDims)
-v0 = 0
+v0 = 0.01*sigma/dt
 rss = np.zeros((nTimesteps, nParticles, nDims))
 vss = np.zeros((nTimesteps, nParticles, nDims))
 
 r0s = L*(np.random.rand(nParticles, nDims))
-v0s = 0*v0*(np.random.rand(nParticles, nDims)-0.5)
+v0s = v0*(np.random.rand(nParticles, nDims)-0.5)
 rss[0,:,:] = r0s
 vss[0,:,:] = v0s
 
@@ -103,7 +104,7 @@ for i in range(nTimesteps-1):
 
 for j in range(nParticles):
     plt.scatter(rss[:,j,0], rss[:,j,1], alpha = np.linspace(0,0.1,nTimesteps))
-    plt.scatter(rss[0,j,0], rss[0,j,1], s = 200, facecolors = "none", edgecolors = "lightgrey")
+    plt.scatter(rss[0,j,0], rss[0,j,1], s = 200, facecolors = "none", edgecolors = "red")
     plt.scatter(rss[-1,j,0], rss[-1,j,1], s = 200, facecolors = "none", edgecolors = "black")
 plt.show()
 
