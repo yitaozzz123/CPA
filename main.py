@@ -27,7 +27,7 @@ This first part contains the numerical setup of the simulation:
 
 
 box_size=1e-9
-n_dim=2
+n_dim=3
 num_particles=10 #200
 mass = 40/(6.022e+23)
 timestep=1e-18
@@ -45,7 +45,7 @@ box=box_size * np.ones(n_dim)
 
 #tail initialization
 tail=deque(maxlen=tail_lenght)
-tail.append(pos.copy())
+tail.append(pos.copy())     
 
 #setup for 3d
 if n_dim==3:
