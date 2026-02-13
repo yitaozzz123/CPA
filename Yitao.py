@@ -76,7 +76,7 @@ def calculateForces(rs, boxDimensions, nDims):
 
 
 
-
+"""
 # Messing around with some simulation. You can ignore
 
 nTimesteps = 1000
@@ -109,3 +109,4 @@ for j in range(nParticles):
 plt.show()
 
 
+"""
