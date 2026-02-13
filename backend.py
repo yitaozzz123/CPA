@@ -21,7 +21,8 @@ def pairwiseForce(r):
     # calculate the norm of rVec = r        
     rNorm = np.sqrt(np.dot(r, r))
     # calculate the force via F = -nabla U using the Lennard-Jones potential
-    force = epsilon*(48*(sigma**12)*(rNorm**-14) - 24*(sigma**6)*(rNorm**-8))*r
+    # force = epsilon*(48*(sigma**12)*(rNorm**-14) - 24*(sigma**6)*(rNorm**-8))*r
+    force = (48*(rNorm**-14) - 24*(rNorm**-8))*r
     return force
 
 
@@ -32,7 +33,7 @@ rs is an array of vectors from target -> interacting particles
 nDims is the number of dimensions.
 returns the net force experienced from all the interactions on that particle
 """
-def netForce(rs, nDims):
+def netForce(rs, nDims, sigma = sigma, epsilon = epsilon, mass = mass):
     # loop through each particle and sum up its pairwise force contribution
     force = np.zeros(nDims)
     for i in range(len(rs)):
