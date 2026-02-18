@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 
 
 # physical parameters corresponding to Argon
-sigma = 3.5e-10
-epsilon = 120*1.38e-23
-mass = 40e-3/(6.022e+23)
+sigma = 1
+epsilon = 1
+mass = 1
 
 """
 All functions, quantities are given in natural, units, i.e. dimensionless quantities.
