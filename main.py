@@ -30,7 +30,7 @@ mass = 1
 timestep=1e-14
 tail_lenght=50  
 num_iterations=500
-save=True
+save=False
 fps=60
 periodic_tail=False
 
