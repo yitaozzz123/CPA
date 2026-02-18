@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
 from forces import calculateForces
+from pos_and_vel import box_array, position, velocity
 
 
 """
@@ -25,23 +26,31 @@ This first part contains the numerical setup of the simulation:
     and the final plot
 """
 
-
-box_size=1e-9
-n_dim=3
-num_particles=10 #200
-mass = 40/(6.022e+23)
-timestep=1e-18
-tail_lenght=50
+mass = 1
+timestep=1e-14
+tail_lenght=50  
 num_iterations=500
 save=True
 fps=60
 periodic_tail=False
 
-#initialization of position, velocity 
-pos=np.random.uniform(0, box_size, size=(num_particles, n_dim))
-vel=np.random.uniform(-box_size/(500*timestep), box_size/(timestep*500), size=(num_particles, n_dim))
+n_particles_1d=3
+n_dim=2
 
-box=box_size * np.ones(n_dim)
+empty_space=1
+
+ratio=0.5
+#L=n_particles_1d * (ratio * empty_space)
+L=20
+n_particles=n_particles_1d**n_dim
+
+box_size=L
+#initialization of position, velocity 
+pos=position(n_dim, empty_space, n_particles_1d, L)
+
+vel=velocity(n_particles_1d, n_dim)*0
+
+box = box_array(n_dim, L)
 
 #tail initialization
 tail=deque(maxlen=tail_lenght)
