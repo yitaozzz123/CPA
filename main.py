@@ -27,10 +27,20 @@ This first part contains the numerical setup of the simulation:
     and the final plot
 """
 
+<<<<<<< HEAD:mario.py
+
+box_size=1e-9
+n_dim=2
+num_particles=10 #200
+mass = 40/(6.022e+23)
+timestep=1e-98
+tail_lenght=50
+=======
 max_simulation_time=60
 mass = 1
 timestep=1e-3
 tail_lenght=50  
+>>>>>>> 749fcbb2a1b4a130a9898e9dac4f2f4b5967e18b:main.py
 num_iterations=500
 save=True
 fps=120
