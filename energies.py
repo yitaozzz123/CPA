@@ -64,7 +64,7 @@ def calculateTotalEnergy(rs, vs, boxDimensions):
 
 
 def array_of_energies(rs, vs, boxDimensions):
-    potentialEnergy = calculatePotentialEnergy(rs, boxDimensions)
+    potentialEnergy = calculatePotentialEnergy(rs, boxDimensions)/2
     kineticEnergy = calculateKineticEnergy(vs)
     totalEnergy = potentialEnergy + kineticEnergy
     return potentialEnergy, kineticEnergy, totalEnergy

@@ -61,3 +61,23 @@ def velocity(n_particles_1d, n_dim):
     velocity[:,1]=velocity_module*np.sin(theta)
     return velocity
 
+def toy_position(n_dim, empty_space, n_particles_1d, L):
+
+    pos=np.zeros((2,n_dim))
+    pos[0]+=np.ones(n_dim)*L/3
+    pos[1]+=np.ones(n_dim)*2*L/3
+    
+    return pos
+
+
+def toy_velocity(n_particles_1d, n_dim, pos):
+
+    vel=np.zeros((2,n_dim))
+    vel[0]+=pos[1]-pos[0]
+    vel[1]-=pos[1]-pos[0]
+
+    
+
+
+
+    return vel

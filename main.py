@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
 from forces import calculateForces
-from pos_and_vel import box_array, position, velocity
+from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity
 import time
 from energies import array_of_energies
 
@@ -27,31 +27,37 @@ This first part contains the numerical setup of the simulation:
     and the final plot
 """
 
-simulation_time=10
+max_simulation_time=60
 mass = 1
 timestep=1e-3
 tail_lenght=50  
 num_iterations=500
 save=True
-fps=60
-periodic_tail=True
+fps=120
+periodic_tail=False
 save_data=False
+toy_model =False
 
-n_particles_1d=5
-n_dim=3
+#argon time =10, num_iter=argon_time/timestep
 
-empty_space=0.3
+n_particles_1d=3
+n_dim=2
 
-#ratio=0.5
-#L=n_particles_1d * (ratio * empty_space)
-L=10
+empty_space=0.75
+
+ratio=1.5
+L=n_particles_1d * (ratio * empty_space)
+#L=20
 n_particles=n_particles_1d**n_dim
 
 box_size=L
 #initialization of position, velocity 
-pos=position(n_dim, empty_space, n_particles_1d, L)
-
-vel=velocity(n_particles_1d, n_dim)
+if toy_model:
+    pos=toy_position(n_dim, empty_space, n_particles_1d, L)
+    vel=toy_velocity(n_particles_1d, n_dim, pos)
+else:
+    pos=position(n_dim, empty_space, n_particles_1d, L)
+    vel=velocity(n_particles_1d, n_dim)
 
 box = box_array(n_dim, L)
 
@@ -85,16 +91,17 @@ total.append(energy[2])
 #starting simulation time
 start_time=time.time()
 
-while True:
-
-    if simulation_time < (time.time()-start_time):
+for i in range(num_iterations):
+    if max_simulation_time < (time.time()-start_time):
         break
 
     #computation of the force and acceleration
     F=calculateForces(rs=pos, boxDimensions=box, nDims=n_dim)  
-    acceleration=F/mass
+    acceleration=F
 
     #update of positions and velocity for every interaction
+
+    #############################pos-pos'<1.1*sigma
     pos+=vel*timestep
     vel+=acceleration*timestep
 
@@ -169,6 +176,10 @@ while True:
             fig.savefig("£D_plot.png", dpi=150, bbox_inches="tight")
 
 x = np.arange(len(kinetic))
+#kinetic=np.diff(kinetic)
+#potential=np.diff(potential)
+#total=np.diff(total)
+
 
 plt.close('all')
 
