@@ -6,7 +6,7 @@ All functions, quantities, use dimensionless quantities
 """
 
 """
-Calculate kinetic energy
+Calculate kinetic energy (float)
 vel is an array of velocity vectors [nParticles, nDimensions].
 """
 def calculateKineticEnergy(vel):
@@ -16,7 +16,7 @@ def calculateKineticEnergy(vel):
     return kineticEnergy
 
 """
-Calculates pairwise Lennard-Jones (LJ) potential energy
+Calculates pairwise Lennard-Jones (LJ) potential energy (float)
 deltaR is a single distance vector [nDimensions]
 """
 def pairwisePotential(deltaR):
@@ -27,8 +27,8 @@ def pairwisePotential(deltaR):
     return U
 
 """
-Calculates net Lennard-Jones potential energy of a single particle
-deltaPos is an array of distance vectors [nParticles , nDims matrix].
+Calculates net Lennard-Jones potential energy of a single particle (float)
+deltaPos is an array of distance vectors [nParticles , nDimensions].
 """
 def netPotential(deltaPos):
     netU = 0
@@ -37,7 +37,7 @@ def netPotential(deltaPos):
     return netU
 
 """
-Calculate total potential energy of all particles
+Calculate total potential energy of all particles (float)
 pos is an array of all particle positions [nParticles, nDimensions].
 """
 def calculatePotentialEnergy(pos, boxDimensions):
@@ -53,7 +53,7 @@ def calculatePotentialEnergy(pos, boxDimensions):
     return potentialEnergy
 
 """
-Calculates total energy of all particles
+Calculates total energy of all particles (float)
 pos and vel are arrays of all particle positions and velocities respectively [nParticles, nDimensions]
 """
 def calculateTotalEnergy(pos, vel, boxDimensions):
@@ -62,7 +62,10 @@ def calculateTotalEnergy(pos, vel, boxDimensions):
     totalEnergy = potentialEnergy + kineticEnergy
     return (totalEnergy)
 
-
+"""
+Calculates potential, kinetic and total energy of all particles (float, float, float)
+pos and vel are arrays of all particle positions and velocities respectively [nParticles, nDimensions]
+"""
 def array_of_energies(pos, vel, boxDimensions):
     potentialEnergy = calculatePotentialEnergy(pos, boxDimensions)/2
     kineticEnergy = calculateKineticEnergy(vel)

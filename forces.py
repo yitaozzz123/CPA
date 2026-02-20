@@ -16,7 +16,7 @@ All functions, quantities are given in natural, units, i.e. dimensionless quanti
 
 
 """
-Calculates interaction force between two particles.
+Calculates interaction force between two particles. [nDimensions]
 deltaR is the vector from target -> interacting particle [nDimensions]
 returns the force experienced from the interacting particle
 """
@@ -31,9 +31,9 @@ def pairwiseForce(deltaR):
 
 
 """
-Calculates net force of one particle experienced from all other particles
+Calculates net force of one particle experienced from all other particles [nDimensions]
 deltaPos is an array of vectors from target -> interacting particles [nParticles, nDimensions]
-nDims is the number of dimensions.
+nDims is the number of dimensions. (int)
 returns the net force experienced from all the interactions on that particle
 """
 def netForce(deltaPos, nDims):
@@ -46,7 +46,7 @@ def netForce(deltaPos, nDims):
 
 
 """
-Converts a seperation vector between particles inside a box, to the seperation in the Minimum Image Convention (MIC) clone
+Converts a seperation vector between particles inside a box, to the seperation in the Minimum Image Convention (MIC) clone [nDimensions]
 deltaR is the seperation vector between to particles [nDimensions] e.g. (delta x, delta y, delta z)
 boxDimensions is the x,y,z size array of the box. E.g. a cubic box has (L,L,L)
 """
@@ -60,10 +60,10 @@ def rMIC(deltaR, boxDimensions):
 
 """
 THIS IS THE FUNCTION YOU USE
-Calculates all forces of all particles
+Calculates all forces of all particles [nParticles, nDimensions]
 pos is an array of all positions within the box [nParticles, nDimensions]
-boxDimensions is the x,y,z size array of the box. E.g. a cubic box has (L,L,L)
-nDims is the number of dimensions.
+boxDimensions is the x,y,z size array of the box. [nDimensions]
+nDims is the number of dimensions. (int)
 Returns an array of forces
 """
 def calculateForces(pos, boxDimensions, nDims): 
