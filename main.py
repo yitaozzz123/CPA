@@ -12,8 +12,9 @@ from energies import array_of_energies
 
 """
 In this code, the numerical simulation of the molecule dinamic is animated and saved
-
 """
+
+
 
 """
 This first part contains the numerical setup of the simulation: 
@@ -29,9 +30,9 @@ This first part contains the numerical setup of the simulation:
 #plt.title{simulation's time}
 
 
-max_simulation_time=40
+max_simulation_time=20
 mass = 1
-timestep=5e-4
+timestep=0.01
 tail_lenght=50  
 num_iterations=500
 save=True
@@ -42,8 +43,8 @@ toy_model =False
 
 #argon time =10, num_iter=argon_time/timestep
 
-n_particles_1d=10
-n_dim=2
+n_particles_1d=5
+n_dim=3
 
 empty_space=0.75
 
