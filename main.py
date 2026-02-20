@@ -26,21 +26,13 @@ This first part contains the numerical setup of the simulation:
 - save (boolean) is a switch used to save the data of position, velocities, tails 
     and the final plot
 """
+#plt.title{simulation's time}
 
-<<<<<<< HEAD:mario.py
 
-box_size=1e-9
-n_dim=2
-num_particles=10 #200
-mass = 40/(6.022e+23)
-timestep=1e-98
-tail_lenght=50
-=======
-max_simulation_time=60
+max_simulation_time=40
 mass = 1
-timestep=1e-3
+timestep=5e-4
 tail_lenght=50  
->>>>>>> 749fcbb2a1b4a130a9898e9dac4f2f4b5967e18b:main.py
 num_iterations=500
 save=True
 fps=120
@@ -50,7 +42,7 @@ toy_model =False
 
 #argon time =10, num_iter=argon_time/timestep
 
-n_particles_1d=3
+n_particles_1d=10
 n_dim=2
 
 empty_space=0.75
