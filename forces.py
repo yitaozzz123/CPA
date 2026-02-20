@@ -53,7 +53,7 @@ boxDimensions is the x,y,z size array of the box. E.g. a cubic box has (L,L,L)
 def rMIC(deltaR, boxDimensions):
     # shift the vector r, then take the modulus, which returns the right periodic image.
     # Then re-shift r back to origin.
-    return np.mod(deltaPos + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
+    return np.mod(deltaR + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
 
 
 
