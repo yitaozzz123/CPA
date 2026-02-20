@@ -17,41 +17,43 @@ All functions, quantities are given in natural, units, i.e. dimensionless quanti
 
 """
 Calculates interaction force between two particles.
-r is the vector from target -> interacting particle.
+deltaR is the vector from target -> interacting particle [nDimensions]
 returns the force experienced from the interacting particle
 """
-def pairwiseForce(r):
+def pairwiseForce(deltaR):
     # calculate the norm of rVec = r        
-    rNorm = np.sqrt(np.dot(r, r))
+    rNorm = np.sqrt(np.dot(deltaR, deltaR))
     # calculate the force via F = -nabla U using the Lennard-Jones potential
     # force = epsilon*(48*(sigma**12)*(rNorm**-14) - 24*(sigma**6)*(rNorm**-8))*r
-    force = (48*(rNorm**-14) - 24*(rNorm**-8))*r
+    force = (48*(rNorm**-14) - 24*(rNorm**-8))*deltaR
     return force
 
 
 
 """
 Calculates net force of one particle experienced from all other particles
-rs is an array of vectors from target -> interacting particles
+deltaPos is an array of vectors from target -> interacting particles [nParticles, nDimensions]
 nDims is the number of dimensions.
 returns the net force experienced from all the interactions on that particle
 """
-def netForce(rs, nDims):
+def netForce(deltaPos, nDims):
     # loop through each particle and sum up its pairwise force contribution
     force = np.zeros(nDims)
-    for i in range(len(rs)):
-        force += pairwiseForce(rs[i])
+    for i in range(len(deltaPos)):
+        force += pairwiseForce(deltaPos[i])
     return force
+
+
 
 """
 Converts a seperation vector between particles inside a box, to the seperation in the Minimum Image Convention (MIC) clone
-r is the seperation vector between to particles
+deltaR is the seperation vector between to particles [nDimensions] e.g. (delta x, delta y, delta z)
 boxDimensions is the x,y,z size array of the box. E.g. a cubic box has (L,L,L)
 """
-def rMIC(r, boxDimensions):
+def rMIC(deltaR, boxDimensions):
     # shift the vector r, then take the modulus, which returns the right periodic image.
     # Then re-shift r back to origin.
-    return np.mod(r + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
+    return np.mod(deltaPos + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
 
 
 
@@ -59,21 +61,22 @@ def rMIC(r, boxDimensions):
 """
 THIS IS THE FUNCTION YOU USE
 Calculates all forces of all particles
-rs is an array of all positions within the box
+pos is an array of all positions within the box [nParticles, nDimensions]
 boxDimensions is the x,y,z size array of the box. E.g. a cubic box has (L,L,L)
+nDims is the number of dimensions.
 Returns an array of forces
 """
-def calculateForces(rs, boxDimensions, nDims): 
+def calculateForces(pos, boxDimensions, nDims): 
     # loop through each particle i
     # fs is the an array of net-force vectors for each particle 
-    fs = np.zeros((len(rs),nDims))
-    for i in range(len(rs)):
+    fs = np.zeros((len(pos),nDims))
+    for i in range(len(pos)):
         # 1. take the difference in position between particle i and each other particle
         # 2. remove the zero vector corresponding to self interaction
         # 3. convert seperations into MIC nearest clone seperations.
-        deltaRs = rMIC(np.delete(rs[i]-rs, i, 0), boxDimensions)
+        deltaPos = rMIC(np.delete(pos[i]-pos, i, 0), boxDimensions)
         # calculate net force on particle i via Lennard Jones potential
-        fs[i] = netForce(deltaRs, nDims)
+        fs[i] = netForce(deltaPos, nDims)
     return fs
 
 
