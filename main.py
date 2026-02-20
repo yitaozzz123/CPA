@@ -84,7 +84,7 @@ kinetic=[]
 total=[]
 
 #first computation of energy
-energy=array_of_energies(rs=pos, vs=vel, boxDimensions=box)
+energy=array_of_energies(pos=pos, vel=vel, boxDimensions=box)
 potential.append(energy[0])
 kinetic.append(energy[1])
 total.append(energy[2])
@@ -98,7 +98,7 @@ for i in range(num_iterations):
         break
 
     #computation of the force and acceleration
-    F=calculateForces(rs=pos, boxDimensions=box, nDims=n_dim)  
+    F=calculateForces(pos=pos, boxDimensions=box, nDims=n_dim)  
     acceleration=F
 
     #update of positions and velocity for every interaction
@@ -126,7 +126,7 @@ for i in range(num_iterations):
         plottable_tail=tail_numpy
         
     #computation of energy
-    energy=array_of_energies(rs=pos, vs=vel, boxDimensions=box)
+    energy=array_of_energies(pos=pos, vel=vel, boxDimensions=box)
     potential.append(energy[0])
     kinetic.append(energy[1])
     total.append(energy[2])

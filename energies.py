@@ -7,64 +7,64 @@ All functions, quantities, use dimensionless quantities
 
 """
 Calculate kinetic energy
-vs is an array of velocity vectors (nParticles x nDims matrix).
+vel is an array of velocity vectors [nParticles, nDimensions].
 """
-def calculateKineticEnergy(vs):
+def calculateKineticEnergy(vel):
     # elementwise multiplication to get the square of the velocity
     # sum to get total kinetic energy T
-    kineticEnergy = 0.5*np.sum(np.multiply(vs,vs))
+    kineticEnergy = 0.5*np.sum(np.multiply(vel,vel))
     return kineticEnergy
 
 """
 Calculates pairwise Lennard-Jones (LJ) potential energy
-r is a single distance vector
+deltaR is a single distance vector [nDimensions]
 """
-def pairwisePotential(r):
+def pairwisePotential(deltaR):
     # calculate norm of r vector
-    rNorm = np.sqrt(np.dot(r, r))
+    rNorm = np.sqrt(np.dot(deltaR, deltaR))
     # Calculate potential using LJ
     U = 4*(rNorm**-12 - rNorm**-6)
     return U
 
 """
 Calculates net Lennard-Jones potential energy of a single particle
-rs is an array of distance vectors (nParticles x nDims matrix).
+deltaPos is an array of distance vectors [nParticles , nDims matrix].
 """
-def netPotential(rs):
+def netPotential(deltaPos):
     netU = 0
-    for i in range(len(rs)):
-        netU += pairwisePotential(rs[i]) 
+    for i in range(len(deltaPos)):
+        netU += pairwisePotential(deltaPos[i]) 
     return netU
 
 """
 Calculate total potential energy of all particles
-rs is an array of all particle positions (nParticles x nDims matrix).
+pos is an array of all particle positions [nParticles, nDimensions].
 """
-def calculatePotentialEnergy(rs, boxDimensions):
+def calculatePotentialEnergy(pos, boxDimensions):
     # loop through each particle i
     potentialEnergy = 0
-    for i in range(len(rs)):
+    for i in range(len(pos)):
         # 1. take the difference in position between particle i and each other particle
         # 2. remove the zero vector corresponding to self interaction
         # 3. convert seperations into MIC nearest clone seperations.
-        deltaRs = rMIC(np.delete(rs[i]-rs, i, 0), boxDimensions)
+        deltaPos = rMIC(np.delete(pos[i]-pos, i, 0), boxDimensions)
         # calculate net potential energy of particle i via Lennard-Jones potential
-        potentialEnergy += netPotential(deltaRs)
+        potentialEnergy += netPotential(deltaPos)
     return potentialEnergy
 
 """
 Calculates total energy of all particles
-rs and vs are arrays of all particle positions and velocities respectively (nParticles x nDims matrices).
+pos and vel are arrays of all particle positions and velocities respectively [nParticles, nDimensions]
 """
-def calculateTotalEnergy(rs, vs, boxDimensions):
-    potentialEnergy = calculatePotentialEnergy(rs, boxDimensions)
-    kineticEnergy = calculateKineticEnergy(vs)
+def calculateTotalEnergy(pos, vel, boxDimensions):
+    potentialEnergy = calculatePotentialEnergy(pos, boxDimensions)
+    kineticEnergy = calculateKineticEnergy(vel)
     totalEnergy = potentialEnergy + kineticEnergy
     return (totalEnergy)
 
 
-def array_of_energies(rs, vs, boxDimensions):
-    potentialEnergy = calculatePotentialEnergy(rs, boxDimensions)/2
-    kineticEnergy = calculateKineticEnergy(vs)
+def array_of_energies(pos, vel, boxDimensions):
+    potentialEnergy = calculatePotentialEnergy(pos, boxDimensions)/2
+    kineticEnergy = calculateKineticEnergy(vel)
     totalEnergy = potentialEnergy + kineticEnergy
     return potentialEnergy, kineticEnergy, totalEnergy
