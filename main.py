@@ -101,7 +101,7 @@ potential=[]
 kinetic=[]
 total=[]
 
-#first computation of energies
+#first computation of energy
 energy=array_of_energies(pos=pos, vel=vel, boxDimensions=box)
 potential.append(energy[0])
 kinetic.append(energy[1])
@@ -118,23 +118,16 @@ for i in range(num_iterations):
     #If we exceed with the simulation time, the simulation will stop
     if max_simulation_time < (time.time()-start_time):
         break
-    
-    internal_time=timestep*i
 
+    #computation of the force and acceleration
+    F=calculateForces(rs=pos, boxDimensions=box, nDims=n_dim)  
+    acceleration=F
 
-    #############################
-    # pos-pos'<1.1*sigma
-    ##################################################################
-    #UPDATE OF THE PARAMETERS
+    #update of positions and velocity for every interaction
 
-    F=calculateForces(pos=pos, boxDimensions=box, nDims=n_dim)  
-
-    pos+=vel*timestep+(timestep**2)*F/2
-
-    F_2=calculateForces(pos=pos, boxDimensions=box, nDims=n_dim) 
-
-    vel+=timestep*(F_2+F)/2
-
+    #############################pos-pos'<1.1*sigma
+    pos+=vel*timestep
+    vel+=acceleration*timestep
 
     #application of the periodic boundary conditions
     pos%=L
@@ -163,6 +156,11 @@ for i in range(num_iterations):
     else:
         plottable_tail=tail_numpy
         
+    #computation of energy
+    energy=array_of_energies(rs=pos, vs=vel, boxDimensions=box)
+    potential.append(energy[0])
+    kinetic.append(energy[1])
+    total.append(energy[2])
 
 
     #########################################################################
