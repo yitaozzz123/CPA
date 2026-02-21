@@ -30,8 +30,8 @@ This first part contains the numerical setup of the simulation:
 """
 ##################################################
 #SIMULATION PHYSICAL PARAMETERS
-n_particles_1d=5
-n_dim=3
+n_particles_1d=10
+n_dim=2
 n_particles=n_particles_1d**n_dim
 
 
