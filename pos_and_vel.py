@@ -51,10 +51,10 @@ def position(n_dim, empty_space, n_particles_1d, L):
     return pos
     
 
-def velocity(n_particles_1d, n_dim):
+def velocity(n_particles_1d, n_dim, mean=1, std=1):
     n_particles=n_particles_1d**n_dim
 
-    velocity_module=np.random.normal(1, 1, size=n_particles)
+    velocity_module=np.random.normal(mean, std, size=n_particles)
     theta=np.random.uniform(0, 2*np.pi, size=n_particles)
     velocity=np.zeros((n_particles, n_dim))
     velocity[:,0]=velocity_module*np.cos(theta)
