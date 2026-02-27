@@ -30,9 +30,9 @@ This first part contains the numerical setup of the simulation:
 """
 ##################################################
 #SIMULATION PHYSICAL PARAMETERS
-n_particles_1d=10
-n_dim=2
-n_particles=n_particles_1d**n_dim
+
+n_dim=3
+number_density = 0.7 # Dimensionless units!
 
 
 #################################################
@@ -78,7 +78,7 @@ if toy_model:
     pos = toy_position(n_dim, empty_space, n_particles_1d, L)
     vel = toy_velocity(n_particles_1d, n_dim, pos)
 else:
-    pos=position(n_dim, empty_space, n_particles_1d, L)
+    pos=FCC_pos(0.7)
     vel=velocity(n_particles_1d, n_dim, mean=0, std=0.1)
 
 # tail initialization
