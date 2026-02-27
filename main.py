@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
 from forces import calculateForces
-from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity, renormalization
+from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity, renormalization, stable
 import time
 from energies import array_of_energies
 
@@ -39,7 +39,7 @@ n_particles = n_particles_1d**n_dim
 # TIME
 timestep = 1e-2
 fps = 120
-max_simulation_time = 120
+max_simulation_time = 60
 
 tot_internal_time = 20
 num_iterations = int(tot_internal_time / timestep)
@@ -145,8 +145,8 @@ for i in range(num_iterations):
     # tail update
     tail.append(pos.copy())
 
-    if stable(kinetics):
-        vel*=renormalization(T,kinetic)
+    if stable(kinetic):
+        vel*=renormalization(T,energy[1])
 
 
     ####################################################################

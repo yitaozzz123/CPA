@@ -97,9 +97,9 @@ def renormalization( T, kinetic):
     
 
 def stable(kinetics):
-    if kinetics.shape[0]<30:
+    if len(kinetics)<30:
         return False
-    elif np.abs(np.mean(np.diff(kinetics)))<0.1:
+    elif np.abs(np.mean(np.diff(kinetics)))<5:
         return True
     else:
         return False
