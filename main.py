@@ -6,10 +6,9 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
 from forces import calculateForces
-from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity, renormalization
+from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity, renormalization, FCC_pos, stable
 import time
 from energies import array_of_energies
-from pos_and_vel import FFC_pos
 
 
 """
@@ -46,13 +45,14 @@ num_iterations = int(tot_internal_time / timestep)
 
 
 ##################################################
-# BOX PARAMETERS
+# BOX PARAMETERS 
+""" NOT NEEDED ANYMORE!
 empty_space = 1
 ratio = 1  # ratio>=1
 L = n_particles_1d * (ratio * empty_space)
 # L=20
 box = box_array(n_dim, L)
-
+"""
 
 ####################################################
 # FEATURES
@@ -78,8 +78,10 @@ if toy_model:
     pos = toy_position(n_dim, empty_space, n_particles_1d, L)
     vel = toy_velocity(n_particles_1d, n_dim, pos)
 else:
-    pos=FCC_pos(0.7)
-    vel=velocity(n_particles_1d, n_dim, mean=0, std=0.1)
+    pos, box =FCC_pos(0.7)
+    L = box[0]
+    n_particles = len(pos)
+    vel=velocity(n_particles, n_dim, mean=0, std=0.1)
 
 # tail initialization
 if full_tail == False:
