@@ -52,7 +52,7 @@ def position(n_dim, empty_space, n_particles_1d, L):
     
 
 def velocity(n_particles, n_dim, mean=1, std=1):
-    n_particles= n_particles#**n_dim
+    #n_particles= n_particles**n_dim
 
     velocity_module=np.random.normal(mean, std, size=n_particles)
     theta=np.random.uniform(0, 2*np.pi, size=n_particles)

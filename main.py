@@ -261,3 +261,6 @@ plt.legend()
 plt.grid(True)
 plt.savefig(f"Energy_fluctuation_{n_dim}D.png", dpi=150, bbox_inches="tight")
 plt.show()
+
+
+
