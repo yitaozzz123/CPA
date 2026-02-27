@@ -9,6 +9,7 @@ from forces import calculateForces
 from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity
 import time
 from energies import array_of_energies
+from pos_and_vel import FFC_pos
 
 
 """
@@ -31,7 +32,7 @@ This first part contains the numerical setup of the simulation:
 ##################################################
 #SIMULATION PHYSICAL PARAMETERS
 n_particles_1d=10
-n_dim=2
+n_dim=3
 n_particles=n_particles_1d**n_dim
 
 
@@ -78,8 +79,11 @@ if toy_model:
     pos=toy_position(n_dim, empty_space, n_particles_1d, L)
     vel=toy_velocity(n_particles_1d, n_dim, pos)
 else:
-    pos=position(n_dim, empty_space, n_particles_1d, L)
-    vel=velocity(n_particles_1d, n_dim, mean=0, std=0.1)
+    #pos=position(n_dim, empty_space, n_particles_1d, L)
+    pos, box = FFC_pos(0.7)
+    L = box[0]
+    n_particles = len(pos)
+    vel=velocity(n_particles, n_dim, mean=0, std=0.1)
 
 #tail initialization
 if full_tail==False:

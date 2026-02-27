@@ -51,8 +51,8 @@ def position(n_dim, empty_space, n_particles_1d, L):
     return pos
     
 
-def velocity(n_particles_1d, n_dim, mean=1, std=1):
-    n_particles=n_particles_1d**n_dim
+def velocity(n_particles, n_dim, mean=1, std=1):
+    n_particles= n_particles#**n_dim
 
     velocity_module=np.random.normal(mean, std, size=n_particles)
     theta=np.random.uniform(0, 2*np.pi, size=n_particles)
@@ -60,6 +60,9 @@ def velocity(n_particles_1d, n_dim, mean=1, std=1):
     velocity[:,0]=velocity_module*np.cos(theta)
     velocity[:,1]=velocity_module*np.sin(theta)
     return velocity
+
+
+
 
 def toy_position(n_dim, empty_space, n_particles_1d, L):
 
@@ -76,8 +79,32 @@ def toy_velocity(n_particles_1d, n_dim, pos):
     vel[0]+=pos[1]-pos[0]
     vel[1]-=pos[1]-pos[0]
 
+
+
+    return vel
+
+
+
+"""
+Returns an array of positions in FFC lattice [nParticles, nDimensions] and the boxsize [nDimensions]
+number_density is the number density of argon in DIMENSIONLESS UNITS (float)
+latticeDimensions is the number of times you want to extend the unit cell in each direction (int, int, int). Default is 3x3x3.
+"""
+def FFC_pos(numberDensity, latticeDimensions = [3,3,3]):
+    latticeConstant = np.cbrt(4/numberDensity)
+    boxsize = latticeConstant*np.array(latticeDimensions)
+    basis = latticeConstant/2*np.array([[0,0,0],[1,1,0],[1,0,1],[0,1,1]])
+    pos = []
+    # loop through lattice vectors
+    for i in range(latticeDimensions[0]):
+        for j in range(latticeDimensions[1]):
+            for k in range(latticeDimensions[2]):
+                latticeVector = latticeConstant*np.array([i,j,k])
+                for l in range(len(basis)):
+                    pos.append(basis[l]+latticeVector)
+    return np.array(pos), boxsize
     
 
 
 
-    return vel
+
