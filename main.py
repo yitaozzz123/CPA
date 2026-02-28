@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from collections import deque
 from forces import calculateForces
-from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity, renormalization, FCC_pos, stable
+from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity, renormalization, stable, FCC_pos, stable
 import time
 from energies import array_of_energies
 
@@ -32,15 +32,15 @@ This first part contains the numerical setup of the simulation:
 
 n_dim=3
 number_density = 0.7 # Dimensionless units!
-
+T=100
 
 #################################################
 # TIME
 timestep = 1e-2
 fps = 120
-max_simulation_time = 120
+max_simulation_time = 60
 
-tot_internal_time = 20
+tot_internal_time = 2
 num_iterations = int(tot_internal_time / timestep)
 
 
@@ -60,10 +60,9 @@ tail_lenght = 20
 full_tail = False
 
 save = True
-save_data = False
-toy_model = False
-plot_en_fluct = False
-
+save_data = 1
+plot_en_fluct = 0
+toy_model = 0
 ############################################
 """
 #PROPER INTIALIZATION OF THE SIMULATION PARAMETERS
@@ -75,13 +74,13 @@ plot_en_fluct = False
 
 # initialization of position, velocity depending on toy model switch
 if toy_model:
-    pos = toy_position(n_dim, empty_space, n_particles_1d, L)
-    vel = toy_velocity(n_particles_1d, n_dim, pos)
+    pos = toy_position(n_dim, L=5)
+    vel = toy_velocity(n_dim, pos)
 else:
-    pos, box =FCC_pos(0.7)
+    pos, box =FCC_pos(1)
     L = box[0]
     n_particles = len(pos)
-    vel=velocity(n_particles, n_dim, mean=0, std=0.1)
+    vel=velocity(n_particles, n_dim, mean=0, std=1)
 
 # tail initialization
 if full_tail == False:
@@ -147,8 +146,8 @@ for i in range(num_iterations):
     # tail update
     tail.append(pos.copy())
 
-    if stable(kinetics):
-        vel*=renormalization(T,kinetic)
+    if stable(kinetic):
+        vel*=renormalization(T,energy[1])
 
 
     ####################################################################

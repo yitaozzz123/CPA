@@ -64,20 +64,12 @@ def position(n_dim, empty_space, n_particles_1d, L):
 def velocity(n_particles, n_dim, mean=0, std=1):
 
     velocity_module = np.random.normal(mean, std, size=(n_particles,n_dim))
-    """theta = np.random.uniform(0, 2 * np.pi, size=n_particles)
-    velocity = np.zeros((n_particles, n_dim))
-    velocity[:, 0] = velocity_module * np.cos(theta)
-    velocity[:, 1] = velocity_module * np.sin(theta)"""
+    
     return velocity_module
 
 
 
-
-
-
-
-
-def toy_position(n_dim, empty_space, n_particles_1d, L):
+def toy_position(n_dim, L):
 
     pos = np.zeros((2, n_dim))
     pos[0] += np.ones(n_dim) * L / 3
@@ -86,7 +78,7 @@ def toy_position(n_dim, empty_space, n_particles_1d, L):
     return pos
 
 
-def toy_velocity(n_particles_1d, n_dim, pos):
+def toy_velocity( n_dim, pos):
 
     vel = np.zeros((2, n_dim))
     vel[0] += pos[1] - pos[0]
@@ -94,8 +86,6 @@ def toy_velocity(n_particles_1d, n_dim, pos):
     vel=np.zeros((2,n_dim))
     vel[0]+=pos[1]-pos[0]
     vel[1]-=pos[1]-pos[0]
-
-
 
     return vel
 
@@ -108,9 +98,9 @@ def renormalization( T, kinetic):
     
 
 def stable(kinetics):
-    if kinetics.shape[0]<30:
+    if len(kinetics)<30:
         return False
-    elif np.abs(np.mean(np.diff(kinetics)))<0.1:
+    elif np.abs(np.mean(np.diff(kinetics)))<5:
         return True
     else:
         return False
@@ -136,7 +126,4 @@ def FCC_pos(numberDensity, latticeDimensions = [3,3,3]):
                     pos.append(basis[l]+latticeVector)
     return np.array(pos), boxsize
     
-
-
-
-
+   
