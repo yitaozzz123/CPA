@@ -90,11 +90,11 @@ def toy_velocity( n_dim, pos):
     return vel
 
 
-def renormalization( T, kinetic):
-    T_dim_less=T/100       #temperature in dimensionless unit   
-    kin_target=3 * (n_particles - 1) * T_dim_less   
-    factor=np.sqrt(kin_target/kinetic)
-    return factor
+def renormalization( d_less_T, kinetic, number_density,vol):
+    n_particles=number_density*vol
+    kin_target=3 * (n_particles - 1) * d_less_T /2
+    factor=np.sqrt(kin_target/kinetic+1e-8)
+    return factor, kin_target
     
 
 def stable(kinetics):

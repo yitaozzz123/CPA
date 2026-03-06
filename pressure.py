@@ -1,5 +1,6 @@
 import numpy as np
 from forces import pairwiseForce
+from forces import rMIC
 
 """
 Calculates total pressure (float)
@@ -21,7 +22,7 @@ def calculatePressure(pos, T, boxDimensions, nDims):
         deltaPos = rMIC(np.delete(pos[i]-pos, i, 0), boxDimensions)
         # calculate net force on particle i via Lennard Jones potential
         sum = 0
-        for j in range(deltaPos):
-            sum -= pairwiseForce(np.dot(deltaPos[j],deltaPos))
-        P = T*numberDensity(1-sum/(12*nParticles*T))
+        for j in range(len(deltaPos)):
+            sum -= np.dot(pairwiseForce(deltaPos[j]),deltaPos[j])
+        P = T*numberDensity*(1-sum/(12*nParticles*T))
     return P
