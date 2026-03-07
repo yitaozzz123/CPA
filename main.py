@@ -38,9 +38,9 @@ d_less_T=0.5        #dless_T=T/120K
 # TIME
 timestep = 1e-2
 fps = 120
-max_simulation_time = 60
+max_simulation_time = 300
 
-tot_internal_time = 2
+tot_internal_time = 0.2
 num_iterations = int(tot_internal_time / timestep)
 
 
@@ -151,7 +151,7 @@ def simulation():
                 factor, kin_target=renormalization(d_less_T,energy[1],number_density, L*L*L)
                 vel*=factor
             if count==100:
-                pressure=calculatePressure(pos, d_less_T, box, n_dim)  
+                pressure=calculatePressure(pos, d_less_T, box)  
                 #corr_function= calculate_corr_function(*variables) 
                 break      
             count+=1
