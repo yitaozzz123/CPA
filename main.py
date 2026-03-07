@@ -9,7 +9,7 @@ from forces import calculateForces
 from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity, renormalization, stable, FCC_pos, stable
 import time
 from energies import array_of_energies
-from pressure import calculatePressure
+from observables import calculatePressure
 
 """
 In this code, the numerical simulation of the molecule dinamic is animated and saved
