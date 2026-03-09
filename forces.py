@@ -34,13 +34,15 @@ def pairwiseForce(deltaR):
 Calculates net force of one particle experienced from all other particles [nDimensions]
 deltaPos is an array of vectors from target -> interacting particles [nParticles, nDimensions]
 nDims is the number of dimensions. (int)
+externalField is an external force field vector acting on each particle [nDimensions]
 returns the net force experienced from all the interactions on that particle
 """
-def netForce(deltaPos, nDims):
+def netForce(deltaPos, nDims, externalField):
     # loop through each particle and sum up its pairwise force contribution
     force = np.zeros(nDims)
     for i in range(len(deltaPos)):
         force += pairwiseForce(deltaPos[i])
+    force += externalField
     return force
 
 
@@ -64,9 +66,10 @@ Calculates all forces of all particles [nParticles, nDimensions]
 pos is an array of all positions within the box [nParticles, nDimensions]
 boxDimensions is the x,y,z size array of the box. [nDimensions]
 nDims is the number of dimensions. (int)
+externalField is an external force field vector acting on each particle [nDimensions]
 Returns an array of forces
 """
-def calculateForces(pos, boxDimensions, nDims): 
+def calculateForces(pos, boxDimensions, nDims, externalField = 0): 
     # loop through each particle i
     # fs is the an array of net-force vectors for each particle 
     fs = np.zeros((len(pos),nDims))
@@ -76,7 +79,7 @@ def calculateForces(pos, boxDimensions, nDims):
         # 3. convert seperations into MIC nearest clone seperations.
         deltaPos = rMIC(np.delete(pos[i]-pos, i, 0), boxDimensions)
         # calculate net force on particle i via Lennard Jones potential
-        fs[i] = netForce(deltaPos, nDims)
+        fs[i] = netForce(deltaPos, nDims, externalField)
     return fs
 
 

@@ -28,7 +28,6 @@ def calculatePairwiseDistances(pos, boxDimensions):
 Calculates total pressure (float)
 pos is an array of all positions within the box [nParticles, nDimensions]
 T is dimensionless temperature (float)
-numberDensity is the number density of the particles (float)
 boxDimensions is the x,y,z size array of the box. [nDimensions]
 """
 def calculatePressure(pos, T, boxDimensions): 
@@ -53,7 +52,6 @@ def calculatePressure(pos, T, boxDimensions):
 Calculates the radial correlation function density g(r) and corresponding distance r ([nBins], [nBins]).
 pos is an array of all positions within the box [nParticles, nDimensions]
 boxDimensions is the x,y,z size array of the box. [nDimensions]
-Only works in 3D!
 """
 def calculateCorrelationFunction(pos, boxDimensions, nBins):
     # number of particles and volume
