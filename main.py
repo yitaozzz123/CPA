@@ -9,7 +9,7 @@ from forces import calculateForces
 from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity, renormalization, stable, FCC_pos, stable
 import time
 from energies import array_of_energies
-from observables import calculatePressure
+from observables import calculatePressure, calculateCorrelationFunction
 
 """
 In this code, the numerical simulation of the molecule dinamic is animated and saved
@@ -28,21 +28,24 @@ This first part contains the numerical setup of the simulation:
     and the final plot
 """
 ##################################################
-#SIMULATION PHYSICAL PARAMETERS
+#SIMULATION PHYSICAL PARAMETERS + STATISTICS
 
-n_dim=3
+num_runs=5      #number of runs to get statistics of the simulations (pressure, corr function)
 number_density = 1.2 # Dimensionless units!
-d_less_T=0.5        #dless_T=T/120K
+d_less_T=0.8        #dless_T=T/120K
 
+field=True
+
+#DO NOT TOUCH!!!
+n_dim=3
 #################################################
 # TIME
 timestep = 1e-2
 fps = 120
 max_simulation_time = 300
 
-tot_internal_time = 0.2
+tot_internal_time = 2
 num_iterations = int(tot_internal_time / timestep)
-
 
 ##################################################
 # BOX PARAMETERS 
@@ -73,6 +76,8 @@ toy_model = 0
 """
 def simulation():
     # initialization of position, velocity depending on toy model switch
+    equilibrium=False
+    pressures, radialCorrelationDensitiess, rBinss, istant = [],[],[],[]
     if toy_model:
         pos = toy_position(n_dim, L=5)
         vel = toy_velocity(n_dim, pos)
@@ -125,8 +130,10 @@ def simulation():
         # pos-pos'<1.1*sigma
         ##################################################################
         # UPDATE OF THE PARAMETERS
-
-        F = calculateForces(pos=pos, boxDimensions=box, nDims=n_dim)
+        if equilibrium==True and field==True:
+            F = calculateForces(pos=pos, boxDimensions=box, nDims=n_dim, externalField=np.array([0,0,100]))
+        else:
+            F = calculateForces(pos=pos, boxDimensions=box, nDims=n_dim)
 
         pos += vel * timestep + (timestep**2) * F / 2
 
@@ -150,9 +157,23 @@ def simulation():
             if count<50:
                 factor, kin_target=renormalization(d_less_T,energy[1],number_density, L*L*L)
                 vel*=factor
+            elif count==50:
+                equilibrium=True
+            elif count%20==0 and field==True:
+                pressure=calculatePressure(pos, d_less_T, box)  
+                radialCorrelationDensities, rBins = calculateCorrelationFunction(pos, boxDimensions=box, nBins=50) 
+                pressures.append(pressure)
+                radialCorrelationDensitiess.append(radialCorrelationDensities)
+                rBinss.append(rBins)
+                istant.append(i)
+
             if count==100:
                 pressure=calculatePressure(pos, d_less_T, box)  
-                #corr_function= calculate_corr_function(*variables) 
+                radialCorrelationDensities, rBins = calculateCorrelationFunction(pos, boxDimensions=box, nBins=50) 
+                pressures.append(pressure)
+                radialCorrelationDensitiess.append(radialCorrelationDensities)
+                rBinss.append(rBins)
+                istant.append(i)
                 break      
             count+=1
 
@@ -258,7 +279,7 @@ def simulation():
     plt.plot(x, kinetic, label="Kinetic energy")
     plt.plot(x, potential, label="Potential energy")
     plt.plot(x, total, label="Total energy")
-    plt.axhline(y=float(kin_target), label="Energy target")
+    plt.axhline(y=float(kin_target),linestyle="--", label="Energy target")
 
     plt.xlabel("Iteration number")
     plt.ylabel("Energy")
@@ -269,55 +290,152 @@ def simulation():
     plt.savefig(f"Energy_fluctuation_{n_dim}D.png", dpi=150, bbox_inches="tight")
     #plt.show()
 
-    return pressure #, corr_function
+    return pressures, radialCorrelationDensitiess, rBinss, istant
 
 
 ##################################################################################################
 
-pressures, corr_funcs=[],[]
+pressures, radialCorrelationDensitiess, rBinss=[],[],[]
 
-for i in range(5):
-    pressure=simulation()
+for i in range(num_runs):
+    pressure,radialCorrelationDensities,rBins=simulation()
     pressures.append(pressure)
-    #corr_funcs.append(corr_funct)
+    radialCorrelationDensitiess.append(radialCorrelationDensities)
+    rBinss.append(rBins)
 
-pressure_mean=np.mean(pressures)
-pressure_std=np.std(pressures)
+###############################################################
+# RADIAL CORRELATION FUNCTION STATISTICS
+# Convert list of g(r) arrays into a numpy array
+# Shape: (num_runs, nBins)
 
-x = np.arange(len(pressures))
+corr_array = np.array(radialCorrelationDensitiess)
+
+# Use the r bins from the first simulation (they should all match)
+r_bins = np.array(rBinss[0])
+
+# Compute the mean value of g(r) for each bin across simulations
+corr_mean = np.mean(corr_array, axis=0)
+
+# Compute the standard deviation across simulations
+corr_std = np.std(corr_array, axis=0)
+
+# Compute the standard error of the mean
+corr_sem = corr_std / np.sqrt(num_runs)
+
+
+###############################################################
+# PLOT: individual simulations + average
 
 plt.close("all")
-plt.figure()
-plt.scatter(x,pressures, label="Pressure on single simulation")
-plt.axhline(pressure_mean, color="red", label=f"Mean: {pressure_mean:.3f}")
+plt.figure(figsize=(8,5))
 
-plt.fill_between(x,pressure_mean-pressure_std, pressure_mean+pressure_std,
-                 alpha=0.2, label=f"std deviation: {pressure_std:.3f}")
+# Plot each simulation in light gray
+for i in range(num_runs):
+    plt.plot(rBinss[i], radialCorrelationDensitiess[i],
+             color="gray", alpha=0.4)
 
-plt.xlabel("Simulation number")
+# Plot the averaged correlation function
+plt.plot(r_bins, corr_mean,
+         color="red",
+         linewidth=2,
+         label="Average g(r)")
+
+# Plot the statistical uncertainty band
+plt.fill_between(r_bins,
+                 corr_mean - corr_std,
+                 corr_mean + corr_std,
+                 alpha=0.2,
+                 label="±1 std")
+
+plt.xlabel("r")
+plt.ylabel("g(r)")
+plt.title(f"Average radial correlation function ({num_runs} simulations)")
+plt.legend()
+plt.grid(True)
+
+# Save the plot
+plt.savefig(f"Average_radial_correlation_functionrho_{number_density}_T_{d_less_T}.png",
+            dpi=150,
+            bbox_inches="tight")
+
+plt.show()
+
+
+###############################################################
+# SAVE NUMERICAL DATA
+# Columns: r, mean g(r), std, standard error
+
+output = np.column_stack((r_bins, corr_mean, corr_std, corr_sem))
+
+np.savetxt(
+    f"Average_radial_correlation_functionrho_{number_density}_T_{d_less_T}.txt",
+    output,
+    header="r_bins corr_mean corr_std corr_sem"
+)
+
+
+###############################################################
+# PRESSURE STATISTICS
+
+# Convert pressure list to numpy array
+pressures_array = np.array(pressures)
+
+# Compute mean pressure
+pressure_mean = np.mean(pressures_array)
+
+# Compute standard deviation
+pressure_std = np.std(pressures_array)
+
+# Compute standard error of the mean
+pressure_sem = pressure_std / np.sqrt(num_runs)
+
+
+###############################################################
+# PLOT: pressure values from each simulation
+
+plt.close("all")
+plt.figure(figsize=(8,5))
+
+x = np.arange(num_runs)
+
+# Scatter plot of pressure values from each run
+plt.scatter(x, pressures_array,
+            label="Pressure from individual simulations")
+
+# Plot the mean pressure as a horizontal dashed line
+plt.axhline(pressure_mean,
+            color="red",
+            linestyle="--",
+            label=f"Mean pressure = {pressure_mean:.3f}")
+
+# Plot the uncertainty band (± standard deviation)
+plt.fill_between(x,
+                 pressure_mean - pressure_std,
+                 pressure_mean + pressure_std,
+                 alpha=0.2,
+                 label=f"Std deviation = {pressure_std:.3f}")
+
+plt.xlabel("Simulation index")
 plt.ylabel("Pressure")
+plt.title(f"Pressure measurements over {num_runs} simulations")
 plt.legend()
-plt.title(f"Pressures on {len(x)} simulations")
-plt.savefig(f"Pressures on {len(x)} simulations.png")
+plt.grid(True)
+
+# Save the plot
+plt.savefig(f"Pressure_statistics_rho_{number_density}_T_{d_less_T}.png",
+            dpi=150,
+            bbox_inches="tight")
+
+plt.show()
 
 
-"""
-corr_mean=np.mean(corr_funcs)
-corr_std=np.std(corr_funcs)
+###############################################################
+# SAVE PRESSURE DATA
 
-x = np.arange(len(corr_funcs))
+pressure_output = np.column_stack((x, pressures_array))
 
-plt.close("all")
-plt.figure()
-plt.scatter(x,corr_funcs, label="Correlation function on single simulation")
-plt.axhline(corr_mean, color="red", label=f"Mean: {corr_mean:.3f}")
-
-plt.fill_between(x,corr_mean-corr_std, corr_mean+corr_std,
-                 alpha=0.2, label=f"std deviation: {corr_std:.3f}")
-
-plt.xlabel("Simulation number")
-plt.ylabel("Correlation function")
-plt.legend()
-plt.title(f"Correlation functions on {x} simulations")
-plt.savefig(f"Correlations on {x} simulations.png")
-"""
+np.savetxt(
+    f"Pressure_valuesrho_{number_density}_T_{d_less_T}.txt",
+    pressure_output,
+    header="simulation_index pressure"
+)
