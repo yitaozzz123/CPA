@@ -30,7 +30,7 @@ This first part contains the numerical setup of the simulation:
 ##################################################
 #SIMULATION PHYSICAL PARAMETERS + STATISTICS
 
-num_runs=5      #number of runs to get statistics of the simulations (pressure, corr function)
+num_runs=2      #number of runs to get statistics of the simulations (pressure, corr function)
 number_density = 1.2 # Dimensionless units!
 d_less_T=0.8        #dless_T=T/120K
 
@@ -46,16 +46,6 @@ max_simulation_time = 300
 
 tot_internal_time = 2
 num_iterations = int(tot_internal_time / timestep)
-
-##################################################
-# BOX PARAMETERS 
-""" NOT NEEDED ANYMORE!
-empty_space = 1
-ratio = 1  # ratio>=1
-L = n_particles_1d * (ratio * empty_space)
-# L=20
-box = box_array(n_dim, L)
-"""
 
 ####################################################
 # FEATURES
@@ -153,21 +143,21 @@ def simulation():
         # tail update
         tail.append(pos.copy())
 
-        if stable(kinetic):
+        if stable(kinetic) or i+1==num_iterations:
             if count<50:
                 factor, kin_target=renormalization(d_less_T,energy[1],number_density, L*L*L)
                 vel*=factor
             elif count==50:
                 equilibrium=True
-            elif count%20==0 and field==True:
+            """elif count%20==0 and field==True:
                 pressure=calculatePressure(pos, d_less_T, box)  
                 radialCorrelationDensities, rBins = calculateCorrelationFunction(pos, boxDimensions=box, nBins=50) 
                 pressures.append(pressure)
                 radialCorrelationDensitiess.append(radialCorrelationDensities)
                 rBinss.append(rBins)
-                istant.append(i)
+                istant.append(i)"""
 
-            if count==100:
+            if count==100 or i+1==num_iterations:
                 pressure=calculatePressure(pos, d_less_T, box)  
                 radialCorrelationDensities, rBins = calculateCorrelationFunction(pos, boxDimensions=box, nBins=50) 
                 pressures.append(pressure)
@@ -290,7 +280,7 @@ def simulation():
     plt.savefig(f"Energy_fluctuation_{n_dim}D.png", dpi=150, bbox_inches="tight")
     #plt.show()
 
-    return pressures, radialCorrelationDensitiess, rBinss, istant
+    return pressures[0], radialCorrelationDensitiess[0], rBinss[0], istant[0]
 
 
 ##################################################################################################
@@ -298,7 +288,7 @@ def simulation():
 pressures, radialCorrelationDensitiess, rBinss=[],[],[]
 
 for i in range(num_runs):
-    pressure,radialCorrelationDensities,rBins=simulation()
+    pressure,radialCorrelationDensities,rBins, istant = simulation()
     pressures.append(pressure)
     radialCorrelationDensitiess.append(radialCorrelationDensities)
     rBinss.append(rBins)
