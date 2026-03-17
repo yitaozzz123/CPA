@@ -1,3 +1,16 @@
+"""
+This code provides the backbone of all the project: it simulates the moldecule dynamic
+using most of the tool to: 
+    - initialize the correct initial conditions*
+    - compute internal quantities* e.g. forces, energies
+    - update variables
+    - apply renormalization of velocity*
+    - prepare observables for the final analysis*
+
+* using importied function
+"""
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 from collections import deque
@@ -10,16 +23,42 @@ import matplotlib.pyplot as plt
 from animation import animation
 from energies_plot import plot_energies_fluctuations, plot_energies
 
-#animation parameters (if set as true in main)
-fps=60
-tail_lenght=20
+
 
 
 def simulation(number_density, d_less_T, num_iterations,
                timestep, field, n_counts, field_module, animate=False,
                plot_fluctuations=False, fps=60, tail_lenght=20, save=False, field_study_mode=False):
+    """
+    Run one molecular-dynamics simulation
+
+    The function initializes the system, equilibrates it, optionally applies
+    an external field, and stores pressure, radial correlation function,
+    their bins, and measurement times
+
+    Arguments: (all in dimension-less units)
+        number_density: number density of the system
+        d_less_T: temperature
+        num_iterations: number of maximum steps in the for loop
+        timestep: timestep
+        field: if True, apply an external field after equilibration
+        n_counts: number of measurements to collect in time-study mode
+        field_module: strength of the external field
+        animate: if True, show the animation
+        plot_fluctuations: if True, plot energy fluctuations
+        fps: frames per second for the animation (not that usefull)
+        tail_lenght: tail length used in the animation (fixes some problems with the
+          animation of periodic boundary conditions)
+        save: if True, save plots and data
+        field_study_mode: if True, return a single post-field measurement for
+            field-scan studies
+
+    Returns:
+        pressures, radialCorrelationDensitiess, rBinss, measure_time
+    """
+
     ##############################################################
-    #INITIALIZATION
+    #INITIALIZATION PHASE
     #############################################################
     equilibrium=False
     
@@ -152,7 +191,7 @@ def simulation(number_density, d_less_T, num_iterations,
                     break   
                 
         ####################################################################
-        # TAIL LENGHT INDICES HANDLING
+        # TAIL LENGHT INDICES HANDLING FOR ANIMATION
         ##################################################################
         # from deque to numpy to have a functioning plot
         # we do not want to plot the tail of a particle if the periodic boundary condition happened
@@ -162,14 +201,13 @@ def simulation(number_density, d_less_T, num_iterations,
         yes_tail_index = ~np.any(wrapped, axis=0)
         plottable_tail = tail_numpy[:, yes_tail_index, :]
 
-        #########################################################################
-        #ANIMATION BLOCK
-
         if animate==True:
             animation(plt, fig, ax, plottable_tail, L, internal_time, fps, pos, vel, save_data=True, save=True)    
 
 
     ##############################################################################
+    #PLOT OF ENERGIES
+    #############################################################################
     if plot_fluctuations == True:
         plot_energies_fluctuations(kinetic, timestep, potential, kin_target, field, save=save)
 
