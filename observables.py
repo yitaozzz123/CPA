@@ -84,24 +84,3 @@ def calculateCorrelationFunction(pos, boxDimensions, nBins):
         print("Not appropriate dimensionality. 1D, 2D or 3D only.")
     return radialCorrelationDensities, rBins
 
-
-"""
-# JUST SOME TESTING. YOU CAN IGNORE
-L = 10
-boxDimensions = np.array([L,L,L])
-T = 1
-xs = np.arange(0,L,1)
-pos = []
-for i in range(0,L,1):
-    for j in range(0,L,1):
-        for k in range(0,L,1):
-            pos.append([i,j,k])
-pos = np.array(pos)
-nBins = 50
-
-ys, xs = calculateCorrelationFunction(pos, boxDimensions, nBins)
-plt.plot(xs,ys)
-plt.show()
-print(calculatePressure(pos, T, boxDimensions))
-"""
-

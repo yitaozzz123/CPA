@@ -1,431 +1,430 @@
+"""Main script to run molecular dynamics studies and related data analysis.
+
+This file provides three study modes:
+- no external field;
+- fixed external field with measurements over time;
+- scan over different field values.
+
+The simulation itself is implemented in `simulation.py`, while the plotting
+and statistics are handled in `data_analysis.py`.
+"""
+
 import numpy as np
-import scipy as sp
-from scipy import sparse
-from scipy.spatial import cKDTree
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-from collections import deque
-from forces import calculateForces
-from pos_and_vel import box_array, position, velocity, toy_position, toy_velocity, renormalization, stable, FCC_pos, stable
-import time
-from energies import array_of_energies
-from observables import calculatePressure, calculateCorrelationFunction
 
-"""
-In this code, the numerical simulation of the molecule dinamic is animated and saved
-"""
+from data_analysis import (
+    radial_corr_stats,
+    press_stats,
+    pressure_vs_x_analysis,
+    corr_vs_x_analysis,
+)
+from simulation import simulation
 
 
-"""
-This first part contains the numerical setup of the simulation: 
-- L, num_particles, num_dim
-    mass, are the physical settings of the experiment.
-- timestep is used to compute the update of the position and the velocity
-- tail_lenght determine how long is the tail, that is the component the makes the
-    direction of the particles visible
--num_iteractions determine how long will be the simulation
-- save (boolean) is a switch used to save the data of position, velocities, tails 
-    and the final plot
-"""
 ##################################################
-#SIMULATION PHYSICAL PARAMETERS + STATISTICS
+# SIMULATION PHYSICAL PARAMETERS + STATISTICS
+#
+# num_runs:
+#     number of independent simulations used to estimate averages and
+#     uncertainties on pressure and radial correlation function.
+# number_density:
+#     dimensionless particle density.
+# d_less_T:
+#     reduced temperature, defined here as T / 120 K.
+# field:
+#     switch for turning the external field on or off.
+# field_study:
+#     if False, study the evolution at fixed field over time;
+#     if True, scan different field strengths.
+# field_module:
+#     fixed field strength used in the time-dependent study.
+# n_counts:
+#     number of measurements collected during a time study.
+# field_max, n_field_values:
+#     maximum field and number of sampled field values in the field scan.
+##################################################
 
-num_runs=2      #number of runs to get statistics of the simulations (pressure, corr function)
-number_density = 1.2 # Dimensionless units!
-d_less_T=0.8        #dless_T=T/120K
+num_runs = 3
+number_density = 1.2
+d_less_T = 0.5
 
-field=True
+field = True
+field_study = True
+field_module = 50
+n_counts = 5
+field_max = 100
+n_field_values = 5
 
-#DO NOT TOUCH!!!
-n_dim=3
+
 #################################################
-# TIME
-timestep = 1e-2
-fps = 120
-max_simulation_time = 300
+# TIME PARAMETERS
+#
+# timestep:
+#     integration timestep for the equations of motion.
+# tot_internal_time:
+#     total simulated time.
+# num_iterations:
+#     total number of integration steps.
+#################################################
 
-tot_internal_time = 2
+timestep = 1e-2
+tot_internal_time = 5
 num_iterations = int(tot_internal_time / timestep)
 
+
 ####################################################
-# FEATURES
-tail_lenght = 20
-full_tail = False
+# EXECUTION / OUTPUT FEATURES
+#
+# save:
+#     save plots and data to disk if True.
+# plot_fluctuations:
+#     save fluctuation plots if enabled in simulation.py.
+# animate:
+#     run the animation.
+# show:
+#     display plots interactively.
+####################################################
 
-save = True
-save_data = 1
-plot_en_fluct = 0
-toy_model = 0
-############################################
-"""
-#PROPER INTIALIZATION OF THE SIMULATION PARAMETERS
-#POSITION
-#VELOCITY
-#TAIL
-#ENERGIES
-"""
-def simulation():
-    # initialization of position, velocity depending on toy model switch
-    equilibrium=False
-    pressures, radialCorrelationDensitiess, rBinss, istant = [],[],[],[]
-    if toy_model:
-        pos = toy_position(n_dim, L=5)
-        vel = toy_velocity(n_dim, pos)
-    else:
-        pos, box =FCC_pos(number_density)
-        L = box[0]
-        n_particles = len(pos)
-        vel=velocity(n_particles, n_dim, mean=0, std=np.sqrt(d_less_T))
+save = False
+plot_fluctuations = False
+animate = False
+show = True
 
-    # tail initialization
-    if full_tail == False:
-        tail = deque(maxlen=tail_lenght)
-    else:
-        tail = []
 
-    tail.append(pos.copy())
+def main_no_field(num_runs):
+    """Run several simulations without external field and analyse final observables.
 
-    # setup for 3d animation & plot
-    if n_dim == 3:
-        import matplotlib.pyplot as plt
+    Parameters
+    ----------
+    num_runs : int
+        Number of independent simulations.
 
-        fig = plt.figure(figsize=(8, 8))
-        ax = fig.add_subplot(111, projection="3d")
+    Returns
+    -------
+    int
+        Zero on successful completion.
+    """
+    pressures, radialCorrelationDensitiess, rBinss, measure_times = [], [], [], []
 
-    # initialization arrays related to energies
-    potential = []
-    kinetic = []
-    total = []
+    for i in range(num_runs):
+        print(f"Simulation {i} started")
 
-    # first computation of energies
-    energy = array_of_energies(pos=pos, vel=vel, boxDimensions=box)
-    potential.append(energy[0])
-    kinetic.append(energy[1])
-    total.append(energy[2])
+        pressure, radialCorrelationDensities, rBins, measure_time = simulation(
+            number_density,
+            d_less_T,
+            num_iterations,
+            timestep,
+            field,
+            n_counts,
+            field_module,
+            animate=animate,
+            plot_fluctuations=plot_fluctuations,
+            save=save,
+            field_study_mode=False,
+        )
 
-    ##################################################################
-    # SIMULATION
-    count=0
-    # starting simulation time
-    start_time = time.time()
+        pressures.append(pressure[0])
+        radialCorrelationDensitiess.append(radialCorrelationDensities[0])
+        rBinss.append(rBins[0])
+        measure_times.append(measure_time[0])
 
-    for i in range(num_iterations):
-        # If we exceed with the simulation time, the simulation will stop
-        if max_simulation_time < (time.time() - start_time):
-            break
+    press_stats(
+        pressures,
+        measure_times,
+        num_runs,
+        number_density,
+        d_less_T,
+        field,
+        save=save,
+        show=show,
+    )
 
-        internal_time = timestep * i
+    radial_corr_stats(
+        radialCorrelationDensitiess,
+        rBinss,
+        measure_times,
+        num_runs,
+        number_density,
+        d_less_T,
+        field,
+        save=save,
+        show=show,
+    )
 
-        #############################
-        # pos-pos'<1.1*sigma
-        ##################################################################
-        # UPDATE OF THE PARAMETERS
-        if equilibrium==True and field==True:
-            F = calculateForces(pos=pos, boxDimensions=box, nDims=n_dim, externalField=np.array([0,0,100]))
-        else:
-            F = calculateForces(pos=pos, boxDimensions=box, nDims=n_dim)
+    return 0
 
-        pos += vel * timestep + (timestep**2) * F / 2
 
-        F_2 = calculateForces(pos=pos, boxDimensions=box, nDims=n_dim)
+def main_time(num_runs, n_counts):
+    """Run several simulations at fixed field and analyse observables versus time.
 
-        vel += timestep * (F_2 + F) / 2 #industrial freezer effect
+    Parameters
+    ----------
+    num_runs : int
+        Number of independent simulations.
+    n_counts : int
+        Number of measurements collected during each simulation.
 
-        # application of the periodic boundary conditions
-        pos %= L
+    Returns
+    -------
+    int
+        Zero on successful completion.
+    """
+    pressures, radialCorrelationDensitiess, rBinss = [], [], []
 
-        # computation of energy
-        energy = array_of_energies(pos=pos, vel=vel, boxDimensions=box)
-        potential.append(energy[0])
-        kinetic.append(energy[1])
-        total.append(energy[2])
+    for i in range(num_runs):
+        print(f"Simulation {i} started")
 
-        # tail update
-        tail.append(pos.copy())
+        pressure, radialCorrelationDensities, rBins, measure_time = simulation(
+            number_density,
+            d_less_T,
+            num_iterations,
+            timestep,
+            field,
+            n_counts,
+            field_module,
+            animate=animate,
+            plot_fluctuations=plot_fluctuations,
+            save=save,
+            field_study_mode=False,
+        )
 
-        if stable(kinetic) or i+1==num_iterations:
-            if count<50:
-                factor, kin_target=renormalization(d_less_T,energy[1],number_density, L*L*L)
-                vel*=factor
-            elif count==50:
-                equilibrium=True
-            """elif count%20==0 and field==True:
-                pressure=calculatePressure(pos, d_less_T, box)  
-                radialCorrelationDensities, rBins = calculateCorrelationFunction(pos, boxDimensions=box, nBins=50) 
-                pressures.append(pressure)
-                radialCorrelationDensitiess.append(radialCorrelationDensities)
-                rBinss.append(rBins)
-                istant.append(i)"""
+        pressures.append(pressure)
+        radialCorrelationDensitiess.append(radialCorrelationDensities)
+        rBinss.append(rBins)
 
-            if count==100 or i+1==num_iterations:
-                pressure=calculatePressure(pos, d_less_T, box)  
-                radialCorrelationDensities, rBins = calculateCorrelationFunction(pos, boxDimensions=box, nBins=50) 
-                pressures.append(pressure)
-                radialCorrelationDensitiess.append(radialCorrelationDensities)
-                rBinss.append(rBins)
-                istant.append(i)
-                break      
-            count+=1
+    mean_pressures, std_pressures = [], []
+    mean_radialCorrelationDensitiess, std_radialCorrelationDensitiess = [], []
 
-        ####################################################################
-        # TAIL FIXES ON ARRAY HANDLING
+    pressures = np.array(pressures)
+    radialCorrelationDensitiess = np.array(radialCorrelationDensitiess)
+    rBinss = np.array(rBinss)
+    measure_times = np.array(measure_time.copy())
 
-        # from deque to numpy to have a functioning plot
-        tail_numpy = np.stack(tail, axis=0)
+    for j in range(len(pressures[0])):
+        mean_pressure, std_pressure = press_stats(
+            np.array(pressures[:, j]),
+            measure_times,
+            num_runs,
+            number_density,
+            d_less_T,
+            field,
+            save=save,
+            show=False,
+        )
 
-        # we do not want to plot the tail of a particle if the periodic boundary condition happened
-        if full_tail == False:
-            d = np.diff(tail_numpy, axis=0)
-            wrapped = np.any(np.abs(d) > L / 2, axis=2)
-            yes_tail_index = ~np.any(wrapped, axis=0)
-            plottable_tail = tail_numpy[:, yes_tail_index, :]
-        else:
-            plottable_tail = tail_numpy
+        mean_radialCorrelationDensities, std_radialCorrelationDensities = radial_corr_stats(
+            radialCorrelationDensitiess[:, j],
+            rBinss[:, j],
+            measure_times,
+            num_runs,
+            number_density,
+            d_less_T,
+            field,
+            save=save,
+            show=False,
+        )
 
-        #########################################################################
-        # STARTING ANIMATIONS
+        mean_pressures.append(mean_pressure)
+        std_pressures.append(std_pressure)
+        mean_radialCorrelationDensitiess.append(mean_radialCorrelationDensities)
+        std_radialCorrelationDensitiess.append(std_radialCorrelationDensities)
 
-        # animation in 2d or 3d and save of the last plot
-        if n_dim == 2:
-            plt.clf()
+        print(j)
 
-            plt.scatter(pos[:, 0], pos[:, 1], marker="o")
+    mean_pressures = np.array(mean_pressures)
+    std_pressures = np.array(std_pressures)
+    mean_radialCorrelationDensitiess = np.array(mean_radialCorrelationDensitiess)
 
-            for plottable_particle in range(np.shape(plottable_tail)[1]):
-                plt.plot(
-                    plottable_tail[:, plottable_particle, 0],
-                    plottable_tail[:, plottable_particle, 1],
+    pressure_vs_x_analysis(
+        mean_pressures,
+        std_pressures,
+        measure_times,
+        field_as_x=False,
+        save=save,
+        show=show,
+    )
+
+    corr_vs_x_analysis(
+        mean_radialCorrelationDensitiess,
+        rBinss[0],
+        measure_times,
+        num_runs,
+        number_density,
+        d_less_T,
+        field,
+        field_as_x=False,
+        save=save,
+        show=show,
+    )
+
+    return 0
+
+
+def main_field(num_runs, field_max, n_field_values):
+    """Run several simulations for different field values and analyse observables.
+
+    Parameters
+    ----------
+    num_runs : int
+        Number of independent simulation sets.
+    field_max : float
+        Maximum field value included in the scan.
+    n_field_values : int
+        Number of sampled field values, including 0 and field_max.
+
+    Returns
+    -------
+    int
+        Zero on successful completion.
+    """
+    pressures, radialCorrelationDensitiess, rBinss = [], [], []
+
+    field_values = np.linspace(0.0, field_max, n_field_values)
+
+    for i in range(num_runs):
+        print(f"Set of simulation {i} started")
+
+        run_pressures = []
+        run_radialCorrelationDensitiess = []
+        run_rBinss = []
+
+        for j, field_value in enumerate(field_values):
+            print(f"Step {j} started, field = {field_value}")
+
+            if field_value==0:
+                pressure, radialCorrelationDensities, rBins, measure_time = simulation(
+                    number_density,
+                    d_less_T,
+                    num_iterations,
+                    timestep,
+                    field=False,
+                    n_counts=1,
+                    field_module=field_value,
+                    animate=animate,
+                    plot_fluctuations=plot_fluctuations,
+                    save=save,
+                    field_study_mode=False,
+                )
+            else:
+                pressure, radialCorrelationDensities, rBins, measure_time = simulation(
+                    number_density,
+                    d_less_T,
+                    num_iterations,
+                    timestep,
+                    field=True,
+                    n_counts=1,
+                    field_module=field_value,
+                    animate=animate,
+                    plot_fluctuations=plot_fluctuations,
+                    save=save,
+                    field_study_mode=True,
                 )
 
-            plt.xlim(0, L)
-            plt.ylim(0, L)
-            plt.title(f"simulation time t={internal_time:.3f}")
-            plt.pause(1 / fps)
+            run_pressures.append(pressure[0])
+            run_radialCorrelationDensitiess.append(radialCorrelationDensities[0])
+            run_rBinss.append(rBins[0])
+
+        pressures.append(run_pressures)
+        radialCorrelationDensitiess.append(run_radialCorrelationDensitiess)
+        rBinss.append(run_rBinss)
+
+    mean_pressures, std_pressures = [], []
+    mean_radialCorrelationDensitiess, std_radialCorrelationDensitiess = [], []
+
+    pressures = np.array(pressures)
+    radialCorrelationDensitiess = np.array(radialCorrelationDensitiess)
+    rBinss = np.array(rBinss)
+
+    for j in range(len(field_values)):
+        mean_pressure, std_pressure = press_stats(
+            pressures[:, j],
+            field_values,
+            num_runs,
+            number_density,
+            d_less_T,
+            field=True,
+            save=save,
+            show=False,
+        )
+
+        mean_radialCorrelationDensities, std_radialCorrelationDensities = radial_corr_stats(
+            radialCorrelationDensitiess[:, j],
+            rBinss[:, j],
+            field_values,
+            num_runs,
+            number_density,
+            d_less_T,
+            True,
+            save=save,
+            show=False,
+        )
+
+        mean_pressures.append(mean_pressure)
+        std_pressures.append(std_pressure)
+        mean_radialCorrelationDensitiess.append(mean_radialCorrelationDensities)
+        std_radialCorrelationDensitiess.append(std_radialCorrelationDensities)
+
+        print(j)
+
+    mean_pressures = np.array(mean_pressures)
+    std_pressures = np.array(std_pressures)
+    mean_radialCorrelationDensitiess = np.array(mean_radialCorrelationDensitiess)
+    std_radialCorrelationDensitiess = np.array(std_radialCorrelationDensitiess)
+
+    pressure_vs_x_analysis(
+        mean_pressures,
+        std_pressures,
+        field_values,
+        field_as_x=True,
+        save=save,
+        show=show,
+    )
+
+    corr_vs_x_analysis(
+        mean_radialCorrelationDensitiess,
+        rBinss[0],
+        field_values,
+        num_runs,
+        number_density,
+        d_less_T,
+        True,
+        field_as_x=True,
+        save=save,
+        show=show,
+    )
+
+    return 0
+
+
+def main():
+    """Select and run the requested study mode.
+
+    Returns
+    -------
+    int
+        Zero on successful completion.
+
+    Raises
+    ------
+    ValueError
+        Raised if the combination of switches is inconsistent.
+    """
+    if field is False:
+        print("Running no-field study")
+        main_no_field(num_runs)
+        return 0
+
+    if field is True and field_study is False:
+        print("Running time-dependent field study")
+        main_time(num_runs, n_counts)
+        return 0
+
+    if field is True and field_study is True:
+        print("Running field-scan study")
+        main_field(num_runs, field_max, n_field_values)
+        return 0
 
-            if save == True:
-                np.save("tail.npy", plottable_tail)
-                np.save("pos.npy", pos)
-                np.save("vel.npy", vel)
-                plt.savefig("2D_plot.png", dpi=150, bbox_inches="tight")
+    raise ValueError("Invalid combination of field and field_study.")
 
-        if n_dim == 3:
-            ax.cla()
 
-            ax.scatter(pos[:, 0], pos[:, 1], pos[:, 2], marker="o")
-
-            for plottable_particle in range(plottable_tail.shape[1]):
-                ax.plot(
-                    plottable_tail[:, plottable_particle, 0],
-                    plottable_tail[:, plottable_particle, 1],
-                    plottable_tail[:, plottable_particle, 2],
-                )
-
-            ax.set_xlim(0, L)
-            ax.set_ylim(0, L)
-            ax.set_zlim(0, L)
-
-            plt.title(f"simulation time t={internal_time:.3f}")
-            plt.draw()
-            plt.pause(1 / fps)
-
-            if save_data == True:
-                np.save("tail.npy", plottable_tail)
-                np.save("pos.npy", pos)
-                np.save("vel.npy", vel)
-
-            if save == True:
-                fig.savefig("3D_plot.png", dpi=150, bbox_inches="tight")
-
-
-    ########################################################################
-    # PLOT OF ENERGIES
-    if plot_en_fluct == True:
-        x = np.arange(len(kinetic) - 1)
-        total = np.diff(total)
-
-        plt.close("all")
-
-        plt.figure(figsize=(8, 5))
-
-        # plt.plot(x, kinetic, label="Kinetic energy")
-        # plt.plot(x, potential, label="Potential energy")
-        plt.plot(x, total, label="Total energy")
-
-        plt.xlabel("Iteration number")
-        plt.ylabel("Energy")
-        plt.title(f"Energy plot with t = {timestep}")
-
-        plt.legend()
-        plt.grid(True)
-        plt.savefig(f"Energy_fluctuation_{n_dim}D.png", dpi=150, bbox_inches="tight")
-        #plt.show()
-
-    x = np.arange(len(kinetic))
-
-    plt.close("all")
-
-    plt.figure(figsize=(8, 5))
-
-    plt.plot(x, kinetic, label="Kinetic energy")
-    plt.plot(x, potential, label="Potential energy")
-    plt.plot(x, total, label="Total energy")
-    plt.axhline(y=float(kin_target),linestyle="--", label="Energy target")
-
-    plt.xlabel("Iteration number")
-    plt.ylabel("Energy")
-    plt.title(f"Energy plot with t = {timestep}")
-
-    plt.legend()
-    plt.grid(True)
-    plt.savefig(f"Energy_fluctuation_{n_dim}D.png", dpi=150, bbox_inches="tight")
-    #plt.show()
-
-    return pressures[0], radialCorrelationDensitiess[0], rBinss[0], istant[0]
-
-
-##################################################################################################
-
-pressures, radialCorrelationDensitiess, rBinss=[],[],[]
-
-for i in range(num_runs):
-    pressure,radialCorrelationDensities,rBins, istant = simulation()
-    pressures.append(pressure)
-    radialCorrelationDensitiess.append(radialCorrelationDensities)
-    rBinss.append(rBins)
-
-###############################################################
-# RADIAL CORRELATION FUNCTION STATISTICS
-# Convert list of g(r) arrays into a numpy array
-# Shape: (num_runs, nBins)
-
-corr_array = np.array(radialCorrelationDensitiess)
-
-# Use the r bins from the first simulation (they should all match)
-r_bins = np.array(rBinss[0])
-
-# Compute the mean value of g(r) for each bin across simulations
-corr_mean = np.mean(corr_array, axis=0)
-
-# Compute the standard deviation across simulations
-corr_std = np.std(corr_array, axis=0)
-
-# Compute the standard error of the mean
-corr_sem = corr_std / np.sqrt(num_runs)
-
-
-###############################################################
-# PLOT: individual simulations + average
-
-plt.close("all")
-plt.figure(figsize=(8,5))
-
-# Plot each simulation in light gray
-for i in range(num_runs):
-    plt.plot(rBinss[i], radialCorrelationDensitiess[i],
-             color="gray", alpha=0.4)
-
-# Plot the averaged correlation function
-plt.plot(r_bins, corr_mean,
-         color="red",
-         linewidth=2,
-         label="Average g(r)")
-
-# Plot the statistical uncertainty band
-plt.fill_between(r_bins,
-                 corr_mean - corr_std,
-                 corr_mean + corr_std,
-                 alpha=0.2,
-                 label="±1 std")
-
-plt.xlabel("r")
-plt.ylabel("g(r)")
-plt.title(f"Average radial correlation function ({num_runs} simulations)")
-plt.legend()
-plt.grid(True)
-
-# Save the plot
-plt.savefig(f"Average_radial_correlation_functionrho_{number_density}_T_{d_less_T}.png",
-            dpi=150,
-            bbox_inches="tight")
-
-plt.show()
-
-
-###############################################################
-# SAVE NUMERICAL DATA
-# Columns: r, mean g(r), std, standard error
-
-output = np.column_stack((r_bins, corr_mean, corr_std, corr_sem))
-
-np.savetxt(
-    f"Average_radial_correlation_functionrho_{number_density}_T_{d_less_T}.txt",
-    output,
-    header="r_bins corr_mean corr_std corr_sem"
-)
-
-
-###############################################################
-# PRESSURE STATISTICS
-
-# Convert pressure list to numpy array
-pressures_array = np.array(pressures)
-
-# Compute mean pressure
-pressure_mean = np.mean(pressures_array)
-
-# Compute standard deviation
-pressure_std = np.std(pressures_array)
-
-# Compute standard error of the mean
-pressure_sem = pressure_std / np.sqrt(num_runs)
-
-
-###############################################################
-# PLOT: pressure values from each simulation
-
-plt.close("all")
-plt.figure(figsize=(8,5))
-
-x = np.arange(num_runs)
-
-# Scatter plot of pressure values from each run
-plt.scatter(x, pressures_array,
-            label="Pressure from individual simulations")
-
-# Plot the mean pressure as a horizontal dashed line
-plt.axhline(pressure_mean,
-            color="red",
-            linestyle="--",
-            label=f"Mean pressure = {pressure_mean:.3f}")
-
-# Plot the uncertainty band (± standard deviation)
-plt.fill_between(x,
-                 pressure_mean - pressure_std,
-                 pressure_mean + pressure_std,
-                 alpha=0.2,
-                 label=f"Std deviation = {pressure_std:.3f}")
-
-plt.xlabel("Simulation index")
-plt.ylabel("Pressure")
-plt.title(f"Pressure measurements over {num_runs} simulations")
-plt.legend()
-plt.grid(True)
-
-# Save the plot
-plt.savefig(f"Pressure_statistics_rho_{number_density}_T_{d_less_T}.png",
-            dpi=150,
-            bbox_inches="tight")
-
-plt.show()
-
-
-###############################################################
-# SAVE PRESSURE DATA
-
-pressure_output = np.column_stack((x, pressures_array))
-
-np.savetxt(
-    f"Pressure_valuesrho_{number_density}_T_{d_less_T}.txt",
-    pressure_output,
-    header="simulation_index pressure"
-)
+if __name__ == "__main__":
+    main()
