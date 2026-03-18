@@ -42,7 +42,7 @@ def calculate_pairwise_distances(pos, box_dimensions):
 
 def calculate_pressure(pos, temperature, box_dimensions): 
     """
-    Calculates total pressure
+    Calculates total pressure using the method presented by Verlet
     
     Arguments:
         pos: np.ndarray(n_particles, n_dimensions), dtype = float
@@ -51,28 +51,25 @@ def calculate_pressure(pos, temperature, box_dimensions):
         box_dimensions: np.ndarray(n_dimensions), dtype = float
             size of the box x, y, z
         """
-    # number of particles and particle number density
+    # number of particles and particle density
     n_particles = len(pos)
     number_density = n_particles/np.prod(box_dimensions)
+
     # Get all pairwise distances from the calculatePairwiseDistances function
     all_distances = calculate_pairwise_distances(pos,box_dimensions)
+
     # sum over all contributions to pressure for each pairwise distance
     sum = 0
     for i in range(len(all_distances)):
         pairwiseDistance = all_distances[i]
         sum += -48*pairwiseDistance**-12 + 24*pairwiseDistance**-6
-    # Put the sum into the formula for pressure (Verlet)
     P = temperature*number_density*(1-sum/(12*n_particles*temperature))
     return P
     
 
 
 
-"""
-Calculates the radial correlation function density g(r) and corresponding distance r ([nBins], [nBins]).
-pos is an array of all positions within the box [nParticles, nDimensions]
-boxDimensions is the x,y,z size array of the box. [nDimensions]
-"""
+
 def calculate_correlation_function(pos, box_dimensions, n_bins):
     """
     Calculates the radial correlation function based on the dimensionality of the box
@@ -98,26 +95,23 @@ def calculate_correlation_function(pos, box_dimensions, n_bins):
     # Maximum valid distance in the histogram is L/2, beyond that g(r) is unphysical
     max_distance = np.min(box_dimensions)/2
 
-    # get all pairwise distances between particles
-    all_distances = calculate_pairwise_distances(pos,box_dimensions)
-
     # calculate absolute correlation histogram
+    all_distances = calculate_pairwise_distances(pos,box_dimensions)
     absolute_correlation_function, bin_edges = np.histogram(all_distances, bins=n_bins, range=[0,max_distance])
-    # convert bin edges into bin centers
-    bin_distances = (bin_edges[:-1] + bin_edges[1:])/2
-    bin_separations = bin_distances[1]-bin_distances[0]               # distance spacing between bins
+    bin_centers = (bin_edges[:-1] + bin_edges[1:])/2
+    bin_width = bin_centers[1]-bin_centers[0]
 
-    # Convert absolute correlation to the proper radial correlation function
+    # Convert absolute correlation to the proper radial correlation function based on dimensionality
     if len(box_dimensions) == 1:    # 1D
-        radial_correlation_densities = 2*volume*absolute_correlation_function/(n_particles*(n_particles-1)*2*bin_separations)
+        radial_correlation_densities = 2*volume*absolute_correlation_function/(n_particles*(n_particles-1)*2*bin_width)
 
     elif len(box_dimensions) == 2:   # 2D
-        radial_correlation_densities = 2*volume*absolute_correlation_function/(n_particles*(n_particles-1)*2*np.pi*bin_distances*bin_separations)
+        radial_correlation_densities = 2*volume*absolute_correlation_function/(n_particles*(n_particles-1)*2*np.pi*bin_centers*bin_width)
 
     elif len(box_dimensions) == 3:     # 3D
-        radial_correlation_densities = 2*volume*absolute_correlation_function/(n_particles*(n_particles-1)*4*np.pi*bin_distances**2*bin_separations)
+        radial_correlation_densities = 2*volume*absolute_correlation_function/(n_particles*(n_particles-1)*4*np.pi*bin_centers**2*bin_width)
     else:
         print("Not appropriate dimensionality. 1D, 2D or 3D only.")
-    return radial_correlation_densities, bin_distances
+    return radial_correlation_densities, bin_centers
 
 
