@@ -15,10 +15,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from collections import deque
 
-from forces import calculateForces
+from forces import calculate_forces
 from pos_and_vel import FCC_pos, velocity, renormalization, stable
 from energies import array_of_energies
-from observables import calculatePressure, calculateCorrelationFunction
+from observables import calculate_pressure, calculate_correlation_function
 import matplotlib.pyplot as plt
 from animation import animation
 from energies_plot import plot_energies_fluctuations, plot_energies
@@ -87,7 +87,7 @@ def simulation(number_density, d_less_T, num_iterations,
         ax = None
 
     # first computation of energies
-    energy = array_of_energies(pos=pos, vel=vel, boxDimensions=box)
+    energy = array_of_energies(pos=pos, vel=vel, box_dimensions=box)
     potential.append(energy[0])
     kinetic.append(energy[1])
     total.append(energy[2])
@@ -107,13 +107,13 @@ def simulation(number_density, d_less_T, num_iterations,
         # UPDATE OF THE PARAMETERS
         #####################################################################
         if equilibrium==True and field==True:
-            F = calculateForces(pos=pos, boxDimensions=box, nDims=3, externalField=np.array([0,0,field_module]))
+            F = calculate_forces(pos=pos, box_dimensions=box, n_dims=3, external_field=np.array([0,0,field_module]))
         else:
-            F = calculateForces(pos=pos, boxDimensions=box, nDims=3)
+            F = calculate_forces(pos=pos, box_dimensions=box, n_dims=3)
 
         pos += vel * timestep + (timestep**2) * F / 2
 
-        F_2 = calculateForces(pos=pos, boxDimensions=box, nDims=3)
+        F_2 = calculate_forces(pos=pos, box_dimensions=box, n_dims=3)
 
         vel += timestep * (F_2 + F) / 2 #industrial freezer effect
 
@@ -121,7 +121,7 @@ def simulation(number_density, d_less_T, num_iterations,
         pos %= L
 
         # computation of energy
-        energy = array_of_energies(pos=pos, vel=vel, boxDimensions=box)
+        energy = array_of_energies(pos=pos, vel=vel, box_dimensions=box)
         potential.append(energy[0])
         kinetic.append(energy[1])
         total.append(energy[2])
@@ -149,8 +149,8 @@ def simulation(number_density, d_less_T, num_iterations,
                 if field==True:
                     print("Field started")
             elif count==100 and field==False:
-                pressure=calculatePressure(pos, d_less_T, box)  
-                radialCorrelationDensities, rBins = calculateCorrelationFunction(pos, boxDimensions=box, nBins=50) 
+                pressure=calculate_pressure(pos, d_less_T, box)  
+                radialCorrelationDensities, rBins = calculate_correlation_function(pos, box_dimensions=box, n_bins=50) 
                 pressures.append(pressure)
                 radialCorrelationDensitiess.append(radialCorrelationDensities)
                 rBinss.append(rBins)
@@ -165,8 +165,8 @@ def simulation(number_density, d_less_T, num_iterations,
 
         if (equilibrium == True) and (field == True) and field_study_mode==False:
             if field_count%20==0:
-                pressure=calculatePressure(pos, d_less_T, box)  
-                radialCorrelationDensities, rBins = calculateCorrelationFunction(pos, boxDimensions=box, nBins=50) 
+                pressure=calculate_pressure(pos, d_less_T, box)  
+                radialCorrelationDensities, rBins = calculate_correlation_function(pos, box_dimensions=box, n_bins=50) 
                 
                 pressures.append(pressure)
                 radialCorrelationDensitiess.append(radialCorrelationDensities)
@@ -182,8 +182,8 @@ def simulation(number_density, d_less_T, num_iterations,
 
         if field_study_mode==True and equilibrium==True and field==True:
                 if field_time>0.5:
-                    pressure=calculatePressure(pos, d_less_T, box)  
-                    radialCorrelationDensities, rBins = calculateCorrelationFunction(pos, boxDimensions=box, nBins=50) 
+                    pressure=calculate_pressure(pos, d_less_T, box)  
+                    radialCorrelationDensities, rBins = calculate_correlation_function(pos, box_dimensions=box, n_bins=50) 
                     pressures.append(pressure)
                     radialCorrelationDensitiess.append(radialCorrelationDensities)
                     rBinss.append(rBins)

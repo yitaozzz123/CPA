@@ -47,8 +47,8 @@ num_runs = 3
 number_density = 1.2
 d_less_T = 0.5
 
-field = True
-field_study = True
+field = False
+field_study = False
 field_module = 50
 n_counts = 5
 field_max = 100
