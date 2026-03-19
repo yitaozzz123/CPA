@@ -107,23 +107,33 @@ def stable(kinetics):
 
 
 
-"""
-Returns an array of positions in FFC lattice [nParticles, nDimensions] and the boxsize [nDimensions]
-number_density is the number density of argon in DIMENSIONLESS UNITS (float)
-latticeDimensions is the number of times you want to extend the unit cell in each direction (int, int, int). Default is 3x3x3.
-"""
-def FCC_pos(numberDensity, latticeDimensions = [3,3,3]):
-    latticeConstant = np.cbrt(4/numberDensity)
-    boxsize = latticeConstant*np.array(latticeDimensions)
-    basis = latticeConstant/2*np.array([[0,0,0],[1,1,0],[1,0,1],[0,1,1]])
+
+def FCC_pos(number_density, lattice_dimensions = [3,3,3]):
+    """
+    Gives atomic positions in FFC lattice
+
+    Arguments:
+        number_density: float
+        lattice_dimensions: list (n_dimensions), dtype = int
+            number of unit cells to initialise in each dimension
+    
+    Returns:
+        pos: np.ndarray (n_particles, n_dimensions), dtype = float
+            array of particle position vectors
+        box_dimensions: np.ndarray (n_dimensions), dtype = float
+            size of the box x, y, z
+    """
+    lattice_constant = np.cbrt(4/number_density)
+    box_dimensions = lattice_constant*np.array(lattice_dimensions)
+    basis = lattice_constant/2*np.array([[0,0,0],[1,1,0],[1,0,1],[0,1,1]])
     pos = []
     # loop through lattice vectors
-    for i in range(latticeDimensions[0]):
-        for j in range(latticeDimensions[1]):
-            for k in range(latticeDimensions[2]):
-                latticeVector = latticeConstant*np.array([i,j,k])
+    for i in range(lattice_dimensions[0]):
+        for j in range(lattice_dimensions[1]):
+            for k in range(lattice_dimensions[2]):
+                lattice_vector = lattice_constant*np.array([i,j,k])
                 for l in range(len(basis)):
-                    pos.append(basis[l]+latticeVector)
-    return np.array(pos), boxsize
+                    pos.append(basis[l]+lattice_vector)
+    return np.array(pos), box_dimensions
     
    

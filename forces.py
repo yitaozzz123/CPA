@@ -1,121 +1,118 @@
+"""
+This code contains all the functions for calculating the total force experienced by particles
+
+The final function used is the all_forces function
+
+All quantities are given in natural units
+"""
 
 
+# IMPORTING
 import numpy as np
-import matplotlib.pyplot as plt
 
 
-
-# physical parameters corresponding to Argon
+# physical parameters corresponding to Argon. These are 1 in dimensionless units.
 sigma = 1
 epsilon = 1
 mass = 1
 
-"""
-All functions, quantities are given in natural, units, i.e. dimensionless quantities.
-"""
 
 
-"""
-Calculates interaction force between two particles. [nDimensions]
-deltaR is the vector from target -> interacting particle [nDimensions]
-returns the force experienced from the interacting particle
-"""
-def pairwiseForce(deltaR):
-    # calculate the norm of rVec = r        
-    rNorm = np.sqrt(np.dot(deltaR, deltaR))
+def pairwise_force(delta_pos):
+    """
+    Calculates the pairwise force experienced by a target particle from an interacting particle
+
+    Arguments:
+        delta_pos: np.ndarray (n_dimensions), dtype = float
+            vector from target to interacting particle
+    
+    Returns:
+        force: np.ndarray (n_dimensions), dtype = float
+            force vector acting on target particle
+    """
+    # calculate the norm of delta_pos vector    
+    delta_pos_norm = np.sqrt(np.dot(delta_pos, delta_pos))
     # calculate the force via F = -nabla U using the Lennard-Jones potential
-    # force = epsilon*(48*(sigma**12)*(rNorm**-14) - 24*(sigma**6)*(rNorm**-8))*r
-    force = (48*(rNorm**-14) - 24*(rNorm**-8))*deltaR
+    force = (48*(delta_pos_norm**-14) - 24*(delta_pos_norm**-8))*delta_pos
     return force
 
 
 
-"""
-Calculates net force of one particle experienced from all other particles [nDimensions]
-deltaPos is an array of vectors from target -> interacting particles [nParticles, nDimensions]
-nDims is the number of dimensions. (int)
-externalField is an external force field vector acting on each particle [nDimensions]
-returns the net force experienced from all the interactions on that particle
-"""
-def netForce(deltaPos, nDims, externalField):
+def net_force(delta_pos, n_dims, external_field):
+    """
+    Calculates the net force experienced by a target particle from all other particles
+
+    Arguments:
+        delta_pos: np.ndarray (n_particles - 1, n_dims), dtype = float
+            array of vectors from target to interacting particles
+        n_dims: int
+            number of dimensions
+        external_field: np.ndarray (n_dims), dtype = float
+            vector of external field
+    
+    Returns:
+        force: np.ndarray (n_dims), dtype = float
+            net force experienced by target particle from all interactions and external field
+    """
     # loop through each particle and sum up its pairwise force contribution
-    force = np.zeros(nDims)
-    for i in range(len(deltaPos)):
-        force += pairwiseForce(deltaPos[i])
-    force += externalField
+    force = np.zeros(n_dims)
+    for i in range(len(delta_pos)):
+        force += pairwise_force(delta_pos[i])
+    force += external_field
     return force
 
 
 
-"""
-Converts a seperation vector between particles inside a box, to the seperation in the Minimum Image Convention (MIC) clone [nDimensions]
-deltaR is the seperation vector between to particles [nDimensions] e.g. (delta x, delta y, delta z)
-boxDimensions is the x,y,z size array of the box. E.g. a cubic box has (L,L,L)
-"""
-def rMIC(deltaR, boxDimensions):
+
+def delta_pos_MIC(delta_pos, box_dimensions):
+    """
+    Converts a delta_pos separation vector between particles into the minimum image convention (MIC) separation vector
+
+    Arguments:
+        delta_pos: np.ndarray (n_dims), dtype = float
+            vector between to particles without MIC
+        box_dimensions: np.ndarray (n_dims), dtype = float
+            size of the box x, y, z
+    """
     # shift the vector r, then take the modulus, which returns the right periodic image.
     # Then re-shift r back to origin.
-    return np.mod(deltaR + 0.5*boxDimensions, boxDimensions) - 0.5*boxDimensions
+    return np.mod(delta_pos + 0.5*box_dimensions, box_dimensions) - 0.5*box_dimensions
 
 
 
 
-"""
-THIS IS THE FUNCTION YOU USE
-Calculates all forces of all particles [nParticles, nDimensions]
-pos is an array of all positions within the box [nParticles, nDimensions]
-boxDimensions is the x,y,z size array of the box. [nDimensions]
-nDims is the number of dimensions. (int)
-externalField is an external force field vector acting on each particle [nDimensions]
-Returns an array of forces
-"""
-def calculateForces(pos, boxDimensions, nDims, externalField = 0): 
+
+def calculate_forces(pos, box_dimensions, n_dims, external_field = 0): 
+    """
+    Calculates the total force experienced by all particles
+    This is the function used in simulation
+    
+    Arguments:
+        pos: np.ndarray (n_particles, n_dims), dtype = float
+            array of position vectors of all particles
+        box_dimensions: np.ndarray (n_dims), dtype = float
+            size of the box x, y, z
+        n_dims: int
+            number of dimensions
+        external_field: np.ndarray (n_dims), dtype = float
+            vector of external field
+
+    Returns:
+        all_forces: np.ndarray (n_particles, n_dims), dtype = float
+            array of all force vectors for all particles
+    """
     # loop through each particle i
     # fs is the an array of net-force vectors for each particle 
-    fs = np.zeros((len(pos),nDims))
+    fs = np.zeros((len(pos),n_dims))
     for i in range(len(pos)):
+        # the following steps calculates separation vectors between particle i and all other particles
         # 1. take the difference in position between particle i and each other particle
         # 2. remove the zero vector corresponding to self interaction
-        # 3. convert seperations into MIC nearest clone seperations.
-        deltaPos = rMIC(np.delete(pos[i]-pos, i, 0), boxDimensions)
+        # 3. convert seperations into MIC nearest clone seperations delta_pos.
+        delta_pos = delta_pos_MIC(np.delete(pos[i]-pos, i, 0), box_dimensions)
         # calculate net force on particle i via Lennard Jones potential
-        fs[i] = netForce(deltaPos, nDims, externalField)
+        fs[i] = net_force(delta_pos, n_dims, external_field)
     return fs
 
 
 
-
-"""
-# Messing around with some simulation. You can ignore
-
-nTimesteps = 1000
-nParticles = 5
-nDims = 2
-dt = 1e-15
-L = sigma*1e1
-boxDimensions = L*np.ones(nDims)
-v0 = 0.01*sigma/dt
-rss = np.zeros((nTimesteps, nParticles, nDims))
-vss = np.zeros((nTimesteps, nParticles, nDims))
-
-r0s = L*(np.random.rand(nParticles, nDims))
-v0s = v0*(np.random.rand(nParticles, nDims)-0.5)
-rss[0,:,:] = r0s
-vss[0,:,:] = v0s
-
-for i in range(nTimesteps-1):
-    Fs = calculateForces(rss[i,:,:], boxDimensions=boxDimensions, nDims=nDims)
-    rss[i+1,:,:] = rss[i,:,:] + dt * vss[i,:,:]
-    vss[i+1,:,:] = vss[i,:,:] + dt * Fs/mass
-    rss[i+1,:,:] = np.mod(rss[i+1,:,:],boxDimensions)
-
-
-
-for j in range(nParticles):
-    plt.scatter(rss[:,j,0], rss[:,j,1], alpha = np.linspace(0,0.1,nTimesteps))
-    plt.scatter(rss[0,j,0], rss[0,j,1], s = 200, facecolors = "none", edgecolors = "red")
-    plt.scatter(rss[-1,j,0], rss[-1,j,1], s = 200, facecolors = "none", edgecolors = "black")
-plt.show()
-
-
-"""
