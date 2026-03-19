@@ -43,16 +43,16 @@ from simulation import simulation
 #     maximum field and number of sampled field values in the field scan.
 ##################################################
 
-num_runs = 3
+num_runs = 10
 number_density = 1.2
 d_less_T = 0.5
 
 field = True
 field_study = True
 field_module = 50
-n_counts = 5
-field_max = 100
-n_field_values = 5
+n_counts = 25
+field_max = 200
+n_field_values = 9
 
 
 #################################################
@@ -67,7 +67,7 @@ n_field_values = 5
 #################################################
 
 timestep = 1e-2
-tot_internal_time = 5
+tot_internal_time = 10
 num_iterations = int(tot_internal_time / timestep)
 
 
@@ -84,10 +84,10 @@ num_iterations = int(tot_internal_time / timestep)
 #     display plots interactively.
 ####################################################
 
-save = False
+save = True
 plot_fluctuations = False
 animate = False
-show = True
+show = False
 
 
 def main_no_field(num_runs):
