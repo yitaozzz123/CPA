@@ -16,6 +16,8 @@ from data_analysis import (
     press_stats,
     pressure_vs_x_analysis,
     corr_vs_x_analysis,
+    pressure_vs_field_analysis,
+    corr_vs_field_analysis
 )
 from simulation import simulation
 
@@ -48,16 +50,16 @@ from simulation import simulation
 #liquid: rho= 0.8 T=1
 #gas:    rho=0.3, T=3
 
-num_runs = 10
-number_density = 0.8
-d_less_T = 1
+num_runs = 2
+number_density = 0.3
+d_less_T = 3
 
 field = True
 field_study = True
-field_module = 50
-n_counts = 25
-field_max = 200
-n_field_values = 9
+field_module = 5
+n_counts = 6
+field_max = 10
+n_field_values = 3
 
 
 #################################################
@@ -92,7 +94,7 @@ num_iterations = int(tot_internal_time / timestep)
 save = True
 plot_fluctuations = 0
 animate = 0
-show = 0
+show = 1
 
 
 def main_no_field(num_runs):
@@ -135,7 +137,6 @@ def main_no_field(num_runs):
 
     press_stats(
         pressures,
-        measure_times,
         num_runs,
         number_density,
         d_less_T,
@@ -147,7 +148,6 @@ def main_no_field(num_runs):
     radial_corr_stats(
         radialCorrelationDensitiess,
         rBinss,
-        measure_times,
         num_runs,
         number_density,
         d_less_T,
@@ -208,7 +208,6 @@ def main_time(num_runs, n_counts):
     for j in range(len(pressures[0])):
         mean_pressure, std_pressure = press_stats(
             np.array(pressures[:, j]),
-            measure_times,
             num_runs,
             number_density,
             d_less_T,
@@ -220,7 +219,6 @@ def main_time(num_runs, n_counts):
         mean_radialCorrelationDensities, std_radialCorrelationDensities = radial_corr_stats(
             radialCorrelationDensitiess[:, j],
             rBinss[:, j],
-            measure_times,
             num_runs,
             number_density,
             d_less_T,
@@ -343,7 +341,6 @@ def main_field(num_runs, field_max, n_field_values):
     for j in range(len(field_values)):
         mean_pressure, std_pressure = press_stats(
             pressures[:, j],
-            field_values,
             num_runs,
             number_density,
             d_less_T,
@@ -355,7 +352,6 @@ def main_field(num_runs, field_max, n_field_values):
         mean_radialCorrelationDensities, std_radialCorrelationDensities = radial_corr_stats(
             radialCorrelationDensitiess[:, j],
             rBinss[:, j],
-            field_values,
             num_runs,
             number_density,
             d_less_T,
@@ -376,24 +372,18 @@ def main_field(num_runs, field_max, n_field_values):
     mean_radialCorrelationDensitiess = np.array(mean_radialCorrelationDensitiess)
     std_radialCorrelationDensitiess = np.array(std_radialCorrelationDensitiess)
 
-    pressure_vs_x_analysis(
+    pressure_vs_field_analysis(
         mean_pressures,
         std_pressures,
         field_values,
-        field_as_x=True,
         save=save,
         show=show,
     )
 
-    corr_vs_x_analysis(
+    corr_vs_field_analysis(
         mean_radialCorrelationDensitiess,
         rBinss[0],
         field_values,
-        num_runs,
-        number_density,
-        d_less_T,
-        True,
-        field_as_x=True,
         save=save,
         show=show,
     )

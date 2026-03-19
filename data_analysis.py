@@ -8,61 +8,79 @@ RADIAL CORRELATION FUNCTION STATISTICS
 Convert list of g(r) arrays into a numpy array
 Shape: (num_runs, nBins)
 """
-def radial_corr_stats(radialCorrelationDensitiess, rBinss, measure_times,
-                      num_runs, number_density, d_less_T, field,
-                      save=False, mean_std=True, show=True):
 
+###############################################################
+# RADIAL CORRELATION FUNCTION STATISTICS VS FIELD
+def radial_corr_stats(radialCorrelationDensitiess, rBinss,
+                      num_runs, number_density, d_less_T, field,
+                      save=False, show=True):
+    """
+    Compute mean and standard deviation of g(r) over independent runs
+    at a fixed field value.
+
+    Parameters
+    ----------
+    radialCorrelationDensitiess : list of arrays
+        List of g(r) arrays from different simulation runs.
+        Expected shape: (num_runs, nBins)
+
+    rBinss : list of arrays
+        Radial bins corresponding to each run.
+        Assumed identical for all runs.
+
+    num_runs : int
+        Number of independent simulations.
+
+    Returns
+    -------
+    r_bins : ndarray
+    corr_mean : ndarray
+        Mean radial correlation function.
+    corr_std : ndarray
+        Standard deviation across runs (NOT standard error).
+    """
+
+    # Convert input list to numpy array
     corr_array = np.array(radialCorrelationDensitiess)
 
-    # Use the r bins from the first simulation (they should all match)
+    # Use r bins from first run (assumed identical)
     r_bins = np.array(rBinss[0])
 
-    # Compute the mean value of g(r) for each bin across simulations
+    # Compute mean and standard deviation across runs
     corr_mean = np.mean(corr_array, axis=0)
-
-    # Compute the standard deviation across simulations
     corr_std = np.std(corr_array, axis=0)
 
-    # Compute the standard error of the mean
-    if mean_std == True:
-        corr_std = corr_std / np.sqrt(num_runs)
-
     ###############################################################
-    # PLOT: individual simulations + average
-
+    # PLOT: mean g(r) + standard deviation band
     plt.figure(figsize=(8, 5))
 
-    # Plot each simulation in light gray
-    for i in range(num_runs):
-        plt.plot(rBinss[i], radialCorrelationDensitiess[i],
-                 color="gray", alpha=0.4)
+    plt.plot(
+        r_bins, corr_mean,
+        linewidth=2,
+        label="Mean g(r)"
+    )
 
-    # Plot the averaged correlation function
-    plt.plot(r_bins, corr_mean,
-             color="red",
-             linewidth=2,
-             label="Average g(r)")
-
-    # Plot the statistical uncertainty band
-    plt.fill_between(r_bins,
-                     corr_mean - corr_std,
-                     corr_mean + corr_std,
-                     alpha=0.2,
-                     label="±1 std")
+    plt.fill_between(
+        r_bins,
+        corr_mean - corr_std,
+        corr_mean + corr_std,
+        alpha=0.25,
+        label="±1 std"
+    )
 
     plt.xlabel("r")
     plt.ylabel("g(r)")
-    plt.title(f"Average radial correlation function ({num_runs} simulations)")
+    plt.title(f"Radial correlation function ({num_runs} runs), field={field}")
     plt.legend()
     plt.grid(True)
 
-    # Save the plot
     if save:
         plt.savefig(
-            f"Average_radial_correlation_function_rho_{number_density}_T_{d_less_T}_field_{field}.png",
+            f"Radial_correlation_mean_std_rho_{number_density}_T_{d_less_T}_field_{field}.png",
             dpi=150,
             bbox_inches="tight"
         )
+
     if show:
         plt.show()
 
@@ -70,12 +88,10 @@ def radial_corr_stats(radialCorrelationDensitiess, rBinss, measure_times,
 
     ###############################################################
     # SAVE NUMERICAL DATA
-    # Columns: r, mean g(r), std
-    if save == True:
+    if save:
         output = np.column_stack((r_bins, corr_mean, corr_std))
-
         np.savetxt(
-            f"Average_radial_correlation_function_rho_{number_density}_T_{d_less_T}_field_{field}.txt",
+            f"Radial_correlation_mean_std_rho_{number_density}_T_{d_less_T}_field_{field}.txt",
             output,
             header="r_bins corr_mean corr_std"
         )
@@ -84,83 +100,241 @@ def radial_corr_stats(radialCorrelationDensitiess, rBinss, measure_times,
 
 
 ###############################################################
-"""
-PRESSURE STATISTICS
-"""
-def press_stats(pressures, measure_times, num_runs, number_density,
-                d_less_T, field, save=False, mean_std=True, show=True):
+# PRESSURE STATISTICS VS FIELD
+def press_stats(pressures, num_runs, number_density, d_less_T, field,
+                save=False, show=True):
+    """
+    Compute mean and standard deviation of pressure across runs
+    at a fixed field.
 
-    # Convert pressure list to numpy array
+    Parameters
+    ----------
+    pressures : list or array
+        Pressure values from independent runs.
+
+    num_runs : int
+        Number of simulations.
+
+    Returns
+    -------
+    pressure_mean : float
+    pressure_std : float
+        Standard deviation across runs.
+    """
+
     pressures_array = np.array(pressures)
 
-    # Compute mean pressure
+    # Compute statistics
     pressure_mean = np.mean(pressures_array)
-
-    # Compute standard deviation
     pressure_std = np.std(pressures_array)
 
-    # Compute standard error of the mean
-    if mean_std == True:
-        pressure_std = pressure_std / np.sqrt(num_runs)
-
     ###############################################################
-    # PLOT: pressure values from each simulation
-
+    # PLOT: individual runs + mean + std band
     plt.figure(figsize=(8, 5))
 
     x = np.arange(num_runs)
 
-    # Scatter plot of pressure values from each run
-    plt.scatter(x, pressures_array,
-                label="Pressure from individual simulations")
+    plt.scatter(
+        x, pressures_array,
+        label="Pressure from individual runs"
+    )
 
-    # Plot the mean pressure as a horizontal dashed line
-    plt.axhline(pressure_mean,
-                color="red",
-                linestyle="--",
-                label=f"Mean pressure = {pressure_mean:.3f}")
+    plt.axhline(
+        pressure_mean,
+        linestyle="--",
+        label=f"Mean pressure = {pressure_mean:.6f}"
+    )
 
-    # Plot the uncertainty band (± standard deviation)
-    plt.fill_between(x,
-                     pressure_mean - pressure_std,
-                     pressure_mean + pressure_std,
-                     alpha=0.2,
-                     label=f"Std deviation = {pressure_std:.3f}")
+    plt.fill_between(
+        x,
+        pressure_mean - pressure_std,
+        pressure_mean + pressure_std,
+        alpha=0.25,
+        label=f"±1 std = {pressure_std:.6f}"
+    )
 
     plt.xlabel("Simulation index")
     plt.ylabel("Pressure")
-    plt.title(f"Pressure measurements over {num_runs} simulations")
+    plt.title(f"Pressure statistics ({num_runs} runs), field={field}")
     plt.legend()
     plt.grid(True)
 
-    # Save the plot
     if save:
         plt.savefig(
             f"Pressure_statistics_rho_{number_density}_T_{d_less_T}_field_{field}.png",
             dpi=150,
             bbox_inches="tight"
         )
+
     if show:
         plt.show()
 
     plt.close()
 
     ###############################################################
-    # SAVE PRESSURE DATA
-    pressure_output = np.column_stack((x, pressures_array))
-
-    if save == True:
+    # SAVE NUMERICAL DATA
+    if save:
+        # Save individual pressure values
+        pressure_values_output = np.column_stack((x, pressures_array))
         np.savetxt(
             f"Pressure_values_rho_{number_density}_T_{d_less_T}_field_{field}.txt",
-            pressure_output,
+            pressure_values_output,
             header="simulation_index pressure"
+        )
+
+        # Save mean and std
+        pressure_stats_output = np.array([[pressure_mean, pressure_std]])
+        np.savetxt(
+            f"Pressure_mean_std_rho_{number_density}_T_{d_less_T}_field_{field}.txt",
+            pressure_stats_output,
+            header="pressure_mean pressure_std"
         )
 
     return pressure_mean, pressure_std
 
 
 ###############################################################
-# PLOT: pressure vs time or magnetic field
+# PRESSURE VS FIELD
+def pressure_vs_field_analysis(mean_pressure, std_pressure, field_values,
+                               save=False, show=True):
+    """
+    Plot mean pressure as a function of field with standard deviation.
+
+    Parameters
+    ----------
+    mean_pressure : array-like
+        Mean pressure for each field.
+
+    std_pressure : array-like
+        Standard deviation for each field.
+
+    field_values : array-like
+        Field values.
+    """
+
+    mean_pressure = np.asarray(mean_pressure).flatten()
+    std_pressure = np.asarray(std_pressure).flatten()
+    field_values = np.asarray(field_values).flatten()
+
+    plt.figure(figsize=(8, 5))
+
+    plt.plot(
+        field_values, mean_pressure,
+        linewidth=2,
+        marker='o',
+        markersize=4,
+        label="Mean pressure"
+    )
+
+    plt.fill_between(
+        field_values,
+        mean_pressure - std_pressure,
+        mean_pressure + std_pressure,
+        alpha=0.25,
+        label="±1 std"
+    )
+
+    plt.xlabel("field")
+    plt.ylabel("pressure")
+    plt.title("Pressure vs field")
+    plt.legend()
+    plt.grid(True)
+
+    if save:
+        plt.savefig(
+            "Pressure_vs_field.png",
+            dpi=150,
+            bbox_inches="tight"
+        )
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+    ###############################################################
+    # SAVE NUMERICAL DATA
+    if save:
+        output = np.column_stack((field_values, mean_pressure, std_pressure))
+        np.savetxt(
+            "Pressure_vs_field.txt",
+            output,
+            header="field mean_pressure std_pressure"
+        )
+
+    return mean_pressure, std_pressure
+
+
+###############################################################
+# CORRELATION FUNCTION VS FIELD
+def corr_vs_field_analysis(corr_means, r_binss, field_values,
+                           save=False, show=True):
+    """
+    Plot mean g(r) for different field values on the same graph.
+
+    No standard deviation is shown here to allow a clearer comparison
+    of structural changes.
+
+    Parameters
+    ----------
+    corr_means : list of arrays
+        Mean g(r) for each field.
+
+    r_binss : list of arrays
+        Corresponding r bins.
+
+    field_values : array-like
+        Field values.
+    """
+
+    field_values = np.asarray(field_values).flatten()
+
+    plt.figure(figsize=(8, 5))
+
+    for corr_mean, r_bins, field in zip(corr_means, r_binss, field_values):
+        corr_mean = np.asarray(corr_mean).flatten()
+        r_bins = np.asarray(r_bins).flatten()
+
+        plt.plot(
+            r_bins, corr_mean,
+            linewidth=2,
+            label=f"field = {field}"
+        )
+
+    plt.xlabel("r")
+    plt.ylabel("g(r)")
+    plt.title("Mean radial correlation function vs field")
+    plt.legend()
+    plt.grid(True)
+
+    if save:
+        plt.savefig(
+            "Radial_correlation_vs_field.png",
+            dpi=150,
+            bbox_inches="tight"
+        )
+
+    if show:
+        plt.show()
+
+    plt.close()
+
+    ###############################################################
+    # SAVE DATA (using npz for multiple curves)
+    if save:
+        save_dict = {"field_values": field_values}
+
+        for i, (r_bins, corr_mean) in enumerate(zip(r_binss, corr_means)):
+            save_dict[f"r_bins_{i}"] = np.asarray(r_bins)
+            save_dict[f"corr_mean_{i}"] = np.asarray(corr_mean)
+
+        np.savez("Radial_correlation_vs_field.npz", **save_dict)
+
+    return corr_means, r_binss, field_values
+
+
+###############################################################
+# PLOT: pressure vs time or field (just time)
 def pressure_vs_x_analysis(mean_pressure, std_pressure, x_values,
                            field_as_x=False, save=False, show=True):
 
@@ -173,10 +347,10 @@ def pressure_vs_x_analysis(mean_pressure, std_pressure, x_values,
     pressure_std_global = np.std(mean_pressure)
 
     if field_as_x == True:
-        x_label = "magnetic field"
-        title = "Average pressure as a function of magnetic field"
+        x_label = "field"
+        title = "Average pressure as a function of field"
         file_tag = "field"
-        header_x = "magnetic_field"
+        header_x = "field"
     else:
         x_label = "time"
         title = "Average pressure as a function of time"
@@ -246,7 +420,7 @@ def pressure_vs_x_analysis(mean_pressure, std_pressure, x_values,
 
 
 ###############################################################
-# PLOT: peak position of g(r) vs time or magnetic field
+# PLOT: peak position of g(r) vs time or field (just for time)
 def corr_vs_x_analysis(rad_corr_dens, rBinss, x_values,
                        num_runs, number_density, d_less_T, field,
                        field_as_x=False, save=False, mean_std=True, show=True):
@@ -275,10 +449,10 @@ def corr_vs_x_analysis(rad_corr_dens, rBinss, x_values,
         peak_std = peak_std / np.sqrt(num_runs)
 
     if field_as_x == True:
-        x_label = "magnetic field"
-        title = "Position of the maximum of g(r) as a function of magnetic field"
+        x_label = "field"
+        title = "Position of the maximum of g(r) as a function of field"
         file_tag = "field"
-        header_x = "magnetic_field"
+        header_x = "field"
     else:
         x_label = "time"
         title = "Position of the maximum of g(r) as a function of time"
@@ -338,3 +512,4 @@ def corr_vs_x_analysis(rad_corr_dens, rBinss, x_values,
         )
 
     return peak_positions, peak_mean, peak_std
+
