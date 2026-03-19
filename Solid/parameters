@@ -1,0 +1,7 @@
+#solid:  rho=1.2, T=0.5
+#liquid: rho= 0.8 T=1
+#gas:    rho=0.3, T=3
+
+no field: 50 runs
+time: 10 runs                       w/ 25 sampling      + 50 field
+field: 10 runs x 9 field values     w/ 200 max field

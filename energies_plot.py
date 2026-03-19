@@ -3,9 +3,9 @@ import numpy as np
 
 ########################################################################
     # PLOT OF ENERGIES
-def plot_energies_fluctuations(kinetic, timestep, potential, kin_target, field, show=False, save=False):
+def plot_energies_fluctuations(timestep, total, field, show=False, save=False):
 
-    x = np.arange(len(kinetic) - 1)
+    x = np.arange(len(total) - 1)
     total = np.diff(total)
 
     plt.close("all")

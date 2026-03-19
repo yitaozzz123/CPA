@@ -26,6 +26,8 @@ from simulation import simulation
 # num_runs:
 #     number of independent simulations used to estimate averages and
 #     uncertainties on pressure and radial correlation function.
+#     It is preferable to not run only one run because np.std() could give problem after
+#     the run of simulation()
 # number_density:
 #     dimensionless particle density.
 # d_less_T:
@@ -42,13 +44,16 @@ from simulation import simulation
 # field_max, n_field_values:
 #     maximum field and number of sampled field values in the field scan.
 ##################################################
+#solid:  rho=1.2, T=0.5
+#liquid: rho= 0.8 T=1
+#gas:    rho=0.3, T=3
 
 num_runs = 10
-number_density = 1.2
-d_less_T = 0.5
+number_density = 0.8
+d_less_T = 1
 
-field = False
-field_study = False
+field = True
+field_study = True
 field_module = 50
 n_counts = 25
 field_max = 200
@@ -85,9 +90,9 @@ num_iterations = int(tot_internal_time / timestep)
 ####################################################
 
 save = True
-plot_fluctuations = False
-animate = False
-show = False
+plot_fluctuations = 0
+animate = 0
+show = 0
 
 
 def main_no_field(num_runs):
@@ -120,6 +125,7 @@ def main_no_field(num_runs):
             plot_fluctuations=plot_fluctuations,
             save=save,
             field_study_mode=False,
+            show=show
         )
 
         pressures.append(pressure[0])

@@ -28,7 +28,7 @@ from energies_plot import plot_energies_fluctuations, plot_energies
 
 def simulation(number_density, d_less_T, num_iterations,
                timestep, field, n_counts, field_module, animate=False,
-               plot_fluctuations=False, fps=60, tail_lenght=20, save=False, field_study_mode=False):
+               plot_fluctuations=False, fps=60, tail_lenght=20, save=False, field_study_mode=False, show=False):
     """
     Run one molecular-dynamics simulation
 
@@ -209,9 +209,9 @@ def simulation(number_density, d_less_T, num_iterations,
     #PLOT OF ENERGIES
     #############################################################################
     if plot_fluctuations == True:
-        plot_energies_fluctuations(kinetic, timestep, potential, kin_target, field, save=save)
+        plot_energies_fluctuations(timestep, total, field, show=show, save=save)
 
-    plot_energies(kinetic, potential, total, kin_target, timestep, field, save=save)
+    plot_energies(kinetic, potential, total, kin_target, timestep, field, save=save, show=show)
 
 
     return pressures, radialCorrelationDensitiess, rBinss, measure_time
